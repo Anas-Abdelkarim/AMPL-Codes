@@ -1,0 +1,15 @@
+#################################################
+#This is a program is written in AMPL to descibe#
+# the optimzation problem to find the optimal   #
+#switching times and sequence for a switched    #
+#system with state jump.                        #
+#Date         : 15/9/2019                       # 
+#Version      : v1.0                            #
+#Written by   : Anas Abdelkarim                 #
+#File name    : run         	                #
+#################################################
+
+solve;
+
+#SHOW RESULTS
+display cost_function ,a ,  f,p ,_total_solve_time;  

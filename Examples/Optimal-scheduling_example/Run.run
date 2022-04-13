@@ -1,0 +1,19 @@
+# In the name of Allah 
+
+#RESET THE AMPL ENVIROMENT
+reset;
+
+
+model Model.mod; # load the model file 
+data  DATA.dat ; # load the data file 
+
+expand   dynamic, cost_function; 
+
+
+
+
+#SOLVE
+solve;
+
+#SHOW RESULTS
+display  x ,a,f,p,cost_function ,_total_solve_time;
