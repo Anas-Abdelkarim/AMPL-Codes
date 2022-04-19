@@ -1,7 +1,7 @@
 # In the name of Allah 
 
-#RESET THE AMPL ENVIROMENT
-reset;
+
+reset;# reset AMPl environment 
 
 
 model Model.mod; # load the model file 

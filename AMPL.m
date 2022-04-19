@@ -385,7 +385,7 @@ classdef AMPL < AMPLBase
             dataExtractFunc
         end
 
-        function [value, astatus,result,exitcode,message,expand] = getObj(self,objName)
+        function [value, astatus,result,exitcode,message,expandCost] = getObj(self,objName)
             % e.g. [value, astatus,result,exitcode,message,expand] = ampl.getObj(varName)
             objClass = self.getObjective(objName);
             value = objClass.value ;
@@ -393,7 +393,7 @@ classdef AMPL < AMPLBase
             astatus = objClass.getValues('astatus');
             exitcode = objClass.exitcode ;
             message  = objClass.message ;
-            expand =  objClass.get ;
+            expandCost =  objClass.get ;
         end
 
 

@@ -13,8 +13,8 @@ ampl = AMPL(amplPathDir);
 %read from .mod and .dat files
 ampl1 = AMPL(amplPathDir);
 
-ampl1.read(['D:\programs\AMPL\Optimal-scheduling_example/Model.mod']);
-ampl1.readData(['D:\programs\AMPL\Optimal-scheduling_example/DATA.dat']);
+ampl1.read(['D:\programs\ampl.mswin64\amplapi\matlab\CustomizedCodes\Examples\Optimal-scheduling_example\Model.mod']);
+ampl1.readData(['D:\programs\ampl.mswin64\amplapi\matlab\CustomizedCodes\Examples\Optimal-scheduling_example\DATA.dat']);
 ampl1.solve
 costValue = ampl1.getValue("cost_function")
 aClass = ampl1.getVariable("a")
@@ -74,7 +74,7 @@ ampl.defineCons("initial_values_constraints",initial_values_constraints,"i in 1.
 
 
 % set values
- N = 2%1720 ;
+ N = 1720 ;
  n_full_maintenance   =  1  ;
  n_partial_maintenance =  2;
  Ts = 1; %  one hour  
@@ -104,11 +104,11 @@ ampl.defineCons("initial_values_constraints",initial_values_constraints,"i in 1.
 	         0  0  0  0  0  1]; 
 
  % defind the data
-ampl.eval(assignParam("N  n_full_maintenance n_partial_maintenance Ts",[N n_full_maintenance n_partial_maintenance Ts]))
-ampl.eval(assignParam("initial_values",initial_values))
-ampl.eval(assignParam("Ma",Ma))
-ampl.eval(assignParam("Mb",Mb))
-ampl.eval(assignParam("Q",Q))
+ampl.assignParam("N  n_full_maintenance n_partial_maintenance Ts",[N n_full_maintenance n_partial_maintenance Ts])
+ampl.assignParam("initial_values",initial_values)
+ampl.assignParam("Ma",Ma)
+ampl.assignParam("Mb",Mb)
+ampl.assignParam("Q",Q)
 
 %% solve the optimization problem 
 ampl.solve
@@ -125,4 +125,4 @@ x1 = x(1,:)';
 
 
 % objective function 
- [value, astatus,result,exitcode,message,expand] = ampl.getObj('cost_function')
+ [value, astatus,result,exitcode,message,expandCost] = ampl.getObj('cost_function')

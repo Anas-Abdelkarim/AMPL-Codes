@@ -12,7 +12,7 @@ else
 
 
     if dataLength==2
-        myValue = dataString{2};
+        myValue = str2num(dataString{2});
         myIndex =  1;
         rowData = myIndex;
     else

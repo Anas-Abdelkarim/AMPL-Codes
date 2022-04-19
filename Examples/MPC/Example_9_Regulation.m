@@ -101,7 +101,7 @@ dynamics  =  "x[i,k+1] =  " + multiply("A.T[i,1..2]","x[1..2,k]") + '+' +"B[i]*u
 ampl.defineCons('dynamics', dynamics,[" i in 1..2", "k in K"] );
 ampl.eval('expand dynamics; ')
 
-ampl.defineCons('bounded_states', "x_min[i] <= x[i, k] <= x_max[i]",["i in 1..2" ,"k in K"] )
+ampl.defineCons('bounded_states', "x_min[i] <= x[i, k] <= x_max[i]",["i in 1..2" ,"k in 1..N"] )
 
 ampl.defineCons('bounded_input', "u_min<=u[k] <= u_max","k in 0..N-1 ")
 
@@ -123,7 +123,7 @@ ampl.solve
 % extract the decision variables and the cost value 
 X{i} = ampl.getVarValue(['x']);
 U{i} =  ampl.getVarValue(['u']);
-[value, astatus,result,exitcode,message,expand] = ampl.getObj('cost_function');
+[value{i}, astatus{i},result{i},exitcode{i},message{i},expandCost{i}] = ampl.getObj('cost_function');
 
 
 % extract the control input

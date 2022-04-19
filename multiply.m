@@ -16,8 +16,8 @@ for k = 1 : numInputs
     try  % if it is alread expaned
     [stringArray{k}, arraySize{k}]  =  expand(varargin{k});
     catch
-      stringArray{k} = varargin{k};
-      arraySize{k} =size(varargin{k});
+      stringArray{k} = string(varargin{k});
+      arraySize{k} =size(stringArray{k} );
     end
 
 end

@@ -1,12 +1,18 @@
 
-function [ stringArray, arraySize]  =  expand(input)
+function [ stringArray, arraySize]  =  expand(varargin)
 % this function converts the matrix to the array of strings
-% or epand a vector or matrix
+% or expand a vector or matrix
 % the input is either string or matrix
 % example for the inputs as a string
 % 1- 'x.T[k , 0 . . 2  ]', .T for transpose , create vector of indexes 0 ,1,2 , k is constant no thing to do with the matrix indexes
 % 2- 'Q1[0..2,m,k, 2..5 ]', create a matrix of row indexes 0 ,1,2 and column indexes from 2 to 3  m, and k is constant no thing to do with the matrix indexes
-% m where m is a numeric array
+% 3- exapnd('x.T[%u..$u, k]',0,2)
+
+if  size(varargin) == 1
+    input = varargin{1};
+else 
+     input =   sprintf(varargin{:});
+end
 
 
 if ischar(input) || isstring(input) % here we need to construct the whole stringArray
@@ -102,6 +108,18 @@ if ischar(input) || isstring(input) % here we need to construct the whole string
     if TransposeFlag
         stringArray = stringArray';
         arraySize = flip(arraySize);
+    end
+
+    if isscalar(stringArray)
+        if  contains(stringArray,'[1,')
+            stringArray =  replace(stringArray,'[1,',"[");
+        elseif  contains(stringArray,',1]')
+            stringArray =  replace(stringArray,',1]',"]");
+         elseif  contains(stringArray,',1,')
+            stringArray =  replace(stringArray,',1,',",");
+        else           
+            stringArray =  replace(stringArray,{'[1]',',1,'},"");
+        end
     end
 else
     precision = 1000;
