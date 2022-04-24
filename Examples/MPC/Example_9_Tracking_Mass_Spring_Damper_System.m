@@ -104,7 +104,7 @@ tic
 
 
 %%% using Ampl
-N = 50000;
+N = 5000;
 nx = 2; % number of states
 nu = 1; % number of inputs
 pr = 1; % number of outputs
@@ -342,8 +342,9 @@ time_ampl = toc;
 
 
 
+
+time_ampl
 time_toolbox
 
 
 
-time_ampl

@@ -56,7 +56,7 @@ u_min = -1;
 u_max = 1;
 
 %% Definition of the Model Predictive Controller
-N = 5;
+N = 50000;
 N_sim = 15;
 
 
@@ -82,7 +82,7 @@ ampl.assignParam("A",A)
 ampl.assignParam("B",B)
 
 %% define a set k for time indexes  (optinal)
-ampl.eval('redeclare set K := 0..N-1;')
+ampl.eval('redeclare set K := 0..N-1;') 
 
 %% Define the decision variables
 ampl.defineVar("x",[2,"0..N"])  % note that x indexes up to N   
