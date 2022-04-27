@@ -139,8 +139,8 @@ x_ref = 0.5*[zeros(1,10) ones(1,20) zeros(1,N_sim-10-20); zeros(1,N_sim)];
 
 %%%%%%%%%%%%%%%%%%%%%%%% Preparing the OP in AMPL %%%%%%%%%%%%%%%%%%%%%%
 
-TC = AMPL(amplPathDir); % OP of traget calculation
-MPC = AMPL(amplPathDir); % OP for MPC
+TC = runAMPL(amplPathDir); % OP of traget calculation
+MPC = runAMPL(amplPathDir); % OP for MPC
 
 
 

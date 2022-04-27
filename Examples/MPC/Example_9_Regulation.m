@@ -61,7 +61,7 @@ N_sim = 15;
 
 
 tic 
-ampl = AMPL(amplPathDir);
+ampl = runAMPL(amplPathDir);
 
 
 

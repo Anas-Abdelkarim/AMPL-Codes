@@ -6,12 +6,21 @@ function [ stringArray, arraySize]  =  expand(varargin)
 % example for the inputs as a string
 % 1- 'x.T[k , 0 . . 2  ]', .T for transpose , create vector of indexes 0 ,1,2 , k is constant no thing to do with the matrix indexes
 % 2- 'Q1[0..2,m,k, 2..5 ]', create a matrix of row indexes 0 ,1,2 and column indexes from 2 to 3  m, and k is constant no thing to do with the matrix indexes
-% 3- exapnd('x.T[%u..$u, k]',0,2)
+% 3- exapnd('x.T[%u..%u, k]',0,2)
+% 4- exapnd('u[1..%u, k]',1) here the output is scalar e.g. u 
+% 5- exapnd('u[1..%u, k]',1,true) here the output is vector e.g u[1];
+
+if   islogical(varargin{end})
+    vector_flag =   varargin{end};
+    varargin =  varargin(1:end-1);
+else
+    vector_flag = false;
+end
 
 if  size(varargin) == 1
     input = varargin{1};
-else 
-     input =   sprintf(varargin{:});
+else     
+    input =   sprintf(varargin{:});
 end
 
 
@@ -110,7 +119,7 @@ if ischar(input) || isstring(input) % here we need to construct the whole string
         arraySize = flip(arraySize);
     end
 
-    if isscalar(stringArray)
+    if isscalar(stringArray) && ~vector_flag
         if  contains(stringArray,'[1,')
             stringArray =  replace(stringArray,'[1,',"[");
         elseif  contains(stringArray,',1]')

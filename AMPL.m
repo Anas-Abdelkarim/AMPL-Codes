@@ -364,12 +364,17 @@ classdef AMPL < AMPLBase
             self.eval(results)
         end
 
-        function assignParam(self,paramName,data)
+        function assignParam(self,paramName,data,vector_flag)
             % e.g. ampl.assignParam(paramName,data)
             % This function is used to assign the value of the parameter in
             % the optimization problem
             % for more information, use the command:   help assignParam
-            results = assignParam(paramName,data)
+            if ~exist("vector_flag","var")
+                vector_flag = false;
+            elseif ~islogical(vector_flag)
+                error('vector_flag takes values only false or true')
+            end
+            results = assignParam(paramName,data,vector_flag)
             self.eval(results)
         end
 
@@ -378,6 +383,12 @@ classdef AMPL < AMPLBase
             data = self.getParameter(paramName);
             dataExtractFunc
         end
+
+          function [myValue, myIndex,rowData] = getSetValue(self,setName)
+            % e.g. [myValue, myIndex,rowData]= ampl.getVarValue(varName)
+            data = self.getSet(setName);
+            dataExtractFunc
+          end
 
         function [myValue, myIndex,rowData] = getVarValue(self,varName)
             % e.g. [myValue, myIndex,rowData]= ampl.getVarValue(varName)

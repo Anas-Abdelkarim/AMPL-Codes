@@ -1,20 +1,24 @@
-function results = paramSet(paramName,data)
+function results = paramSet(paramName,data,vector_flag)
 % This function is used to feed the parameters values  for the
 % optimization problem in ampl language
 % variable_name should match with the name defined in the model part
 % it is possible to feed the values for a group of scalar parameters
 % to do so, define the variable_name as array vector and the data as well
+% vector flag is optional to force defining a scalar as a  vector by
+% keeping an index for the  parameter
 % e.g. variable_name = ['param1 param2']; data = [1,2] 
 % ---> results = paramSet(variable_name,data)
 % e.g,  results = paramSet('Ts',5)
 % e.g,  results = paramSet('A',[1 2 ; 5 6])
 % e.g, results = paramSet('A[2,2]',5) to change only one element in the vector 
+% e.g, results = paramSet('B',2,true) this to indicate the B has index 1; 
 
-
-arguments
-paramName 
-data    
-end  
+if ~exist("vector_flag","var")
+    vector_flag = false;
+elseif ~islogical(vector_flag)
+    error('vector_flag takes values only false or true')
+end 
+ 
 
 data_precision = 1000;
 
@@ -51,7 +55,7 @@ amplCommand =  amplCommand4;
 
 if length(dataSize) <= 2
 
-    if max(dataSize)==1 || multipleNamesFlag
+    if (max(dataSize)==1 || multipleNamesFlag) && ~vector_flag
         results = strcat(amplCommand,paramName, ' := ', num2str(data), ';' );
         if multipleNamesFlag
             results =  strcat(results{:});
@@ -61,6 +65,9 @@ if length(dataSize) <= 2
         column_indexes = 1:dataSize(2);
         column_indexes_str = mat2str(column_indexes);
         column_indexes_str = column_indexes_str(2:end-1);
+        if isempty(column_indexes_str);
+            column_indexes_str = '1';
+        end
         Temp1 = [row_indexes' data ];% add the row_indexes to the data and convert to string
         Temp2 = mat2str(Temp1) ;   % convert to string
         Temp3 = replace(Temp2(2:end-1),';'," ");

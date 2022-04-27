@@ -18,7 +18,9 @@ function results = defineData(dataType,dataName,indexRange,attribute)
 %  e.g indexRange = 5, [1,5], [5,1] , [ 5,1,1], [1,5,1] are the same
 % e.g indexRange = [2,4], [2,1,4], [1,2,1,4,1] ,  are the same
 % e.g indexRange = [2,"3..6"], means tow dimensional data. first dimension
-% ranges for 1 to 2 and the second dimension ranges for 3 to 6
+% e.g indexRange = [2,"i in 1..N", "A"];, where A is a predefined set
+% and the first dimension ranges for 1 to 2
+% and the second dimension ranges from 1 to N
 
 
 % arguments
