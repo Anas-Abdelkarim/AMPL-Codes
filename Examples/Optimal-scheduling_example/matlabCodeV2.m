@@ -4,14 +4,14 @@ amplPathDir = 'D:\programs\ampl.mswin64';
 %% add path for the customized codes
 addpath(amplPathDir+ "\amplapi\matlab\customizedCodes")
 run(amplPathDir + "\amplapi\matlab"+  "\setUp.m")
-ampl1 = AMPL(amplPathDir);
+ampl1 = runAMPL(amplPathDir);
 %ampl = AMPL(amplPathDir);
-ampl = AMPL(amplPathDir);
+ampl = runAMPL(amplPathDir);
 
 
 %%
 %read from .mod and .dat files
-ampl1 = AMPL(amplPathDir);
+ampl1 = runAMPL(amplPathDir);
 
 ampl1.read(['D:\programs\ampl.mswin64\amplapi\matlab\CustomizedCodes\Examples\Optimal-scheduling_example\Model.mod']);
 ampl1.readData(['D:\programs\ampl.mswin64\amplapi\matlab\CustomizedCodes\Examples\Optimal-scheduling_example\DATA.dat']);

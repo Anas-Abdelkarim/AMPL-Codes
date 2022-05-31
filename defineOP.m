@@ -42,21 +42,24 @@ end
 if ~(isstring(data) || ischar(data) )
     data
     error("data must be char")
+else
+    data = string(data);
 end
 
-
+description_set = ["min", "minimize", "max","maximize", "constr", "cons", "Cons","constraint","constraints"];
 % check the dataTypes
-if ~(strcmp(description,"min") ||strcmp(description,"max") ||strcmp(description,"constr"))
-    description;
-    error("Decription must be min, max or constr ")
+if sum(strcmp(description,description_set)) == 0
+    description
+    description_set
+    error("Decription must belong to the description set")
 end
 
 switch description
-    case "min"
+    case {"min", "minimize"}
         detailedDescribtion = "minimize";
-    case "max"
+    case {"max","maximize"}
         detailedDescribtion = "maximize";
-    case "constr"
+    case { "constr", "cons", "Cons","constraint","constraints"}
         detailedDescribtion = "subject to";
 end
 
@@ -84,7 +87,7 @@ if length(data)>1
 end 
 
 results = amplcommand +" "+ detailedDescribtion +" "+ name +" "+setAsString+": "+ data+ "; ";
-results = strcat(results{:})
+results = strcat(results{:});
 
 
 

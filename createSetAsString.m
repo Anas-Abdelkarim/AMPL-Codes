@@ -4,7 +4,7 @@ if ~exist("indexRange",'var')
 end
 
 % double check the indexRange defined correct
-if ~(isnumeric(indexRange)||isstring(indexRange))
+if ~(isnumeric(indexRange)||isstring(indexRange)||ischar(indexRange))
     indexRange
     error('indexRange must be numeric e.g. 5, [5,6] or string e.g [5, "1..6"], "2..4" ')
 end

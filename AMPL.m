@@ -76,16 +76,16 @@ classdef AMPL < AMPLBase
     properties (Access=private)  %GetAccess = SetAccess = private
         handlingOutput = 0
     end
-
+    
     events
         Output
     end
-
+    
     methods
         function onOutput(self, output)
             notify(self, 'Output', output);
         end
-
+        
         function myCallback(self, ~, e)
             data = AMPLOutput(e.LastMessage);
             self.onOutput(data);
@@ -93,12 +93,12 @@ classdef AMPL < AMPLBase
         function initializeEvents(self)
             % INITIALIZEEVENTS initializes the redirection
             % subsystem, enabling the event Output
-
+            
             self.impl.registerMatlabOutputHandler();
             c = handle(self.impl, 'CallbackProperties');
             set(c, 'OutputCallback', @(h,e)self.myCallback(h,e));
         end
-
+        
         function obj = AMPL(environment)
             % AMPL Constructs a new AMPL object.
             %
@@ -114,8 +114,8 @@ classdef AMPL < AMPLBase
             end
             obj@AMPLBase(a)
         end
-
-
+        
+        
         function show(self, varargin)
             if size(varargin) > 0
                 c = toJava('com.ampl.Entity', varargin{:});
@@ -124,7 +124,7 @@ classdef AMPL < AMPLBase
                 error('Not enough arguments')
             end
         end
-
+        
         function expand(self, varargin)
             if size(varargin) > 0
                 c = toJava('com.ampl.Entity',varargin{:});
@@ -133,7 +133,7 @@ classdef AMPL < AMPLBase
                 error('Not enough arguments')
             end
         end
-
+        
         function display(self, varargin)
             if ((size(varargin) > 0) & (~strcmp(varargin{1} ,'ampl')))
                 c = toJava('java.lang.Object', varargin{:});
@@ -142,9 +142,9 @@ classdef AMPL < AMPLBase
                 self.impl.getOption('version')
             end
         end
-
-
-
+        
+        
+        
         function result = getData(self, varargin)
             % Get data in a DataFrame
             %
@@ -164,15 +164,15 @@ classdef AMPL < AMPLBase
                 error('Not enought arguments')
             end
         end
-
+        
         function result = getValue(self, tString1)
             % GETVALUE Get data of a scalar expression
             %   result = getValue(self, tString1) get the value of the AMPL
             %             expression in the string tString1
             result = self.impl.getValue(tString1);
         end
-
-
+        
+        
         function result = cd(self, varargin)
             if(size(varargin)>1)
                 error('Too many arguments')
@@ -183,7 +183,7 @@ classdef AMPL < AMPLBase
                 result = self.impl.cd();
             end
         end
-
+        
         function result = getConstraint(self, name)
             v = self.impl.getConstraint(name);
             if(isempty(v))
@@ -192,7 +192,7 @@ classdef AMPL < AMPLBase
                 result = Constraint(v);
             end
         end
-
+        
         function result = getVariable(self, name)
             v = self.impl.getVariable(name);
             if(isempty(v))
@@ -201,7 +201,7 @@ classdef AMPL < AMPLBase
                 result = Variable(v);
             end
         end
-
+        
         function result = getObjective(self, name)
             v = self.impl.getObjective(name);
             if(isempty(v))
@@ -210,7 +210,7 @@ classdef AMPL < AMPLBase
                 result = Objective(v);
             end
         end
-
+        
         function result = getSet(self, name)
             v = self.impl.getSet(name);
             if(isempty(v))
@@ -219,7 +219,7 @@ classdef AMPL < AMPLBase
                 result = Set(v);
             end
         end
-
+        
         function result = getParameter(self, name)
             v = self.impl.getParameter(name);
             if(isempty(v))
@@ -228,7 +228,7 @@ classdef AMPL < AMPLBase
                 result = Parameter(v);
             end
         end
-
+        
         function result = getEntity(self, name)
             v = self.impl.getEntity(name);
             if(isempty(v))
@@ -238,48 +238,48 @@ classdef AMPL < AMPLBase
                     result = Parameter(v);
                 else if(isa(v, 'com.ampl.Set'))
                         result = Set(v);
-                else if(isa(v, 'com.ampl.Variable'))
-                        result = Variable(v);
-                else  if(isa(v, 'com.ampl.Constraint'))
-                        result = Constraint(v);
-                else if(isa(v, 'com.ampl.Objective'))
-                        result = Objective(v);
-                end
-                end
-                end
-                end
+                    else if(isa(v, 'com.ampl.Variable'))
+                            result = Variable(v);
+                        else  if(isa(v, 'com.ampl.Constraint'))
+                                result = Constraint(v);
+                            else if(isa(v, 'com.ampl.Objective'))
+                                    result = Objective(v);
+                                end
+                            end
+                        end
+                    end
                 end
             end
-
+            
         end
-
-
+        
+        
         function result = getConstraints(self)
             v = self.impl.getConstraints;
             result = EntityMap(v);
         end
-
+        
         function result = getVariables(self)
             v = self.impl.getVariables;
             result = EntityMap(v);
         end
-
+        
         function result = getObjectives(self)
             v = self.impl.getObjectives;
             result = EntityMap(v);
         end
-
+        
         function result = getParameters(self)
             v = self.impl.getParameters;
             result = EntityMap(v);
         end
-
+        
         function result = getSets(self)
             v = self.impl.getSets;
             result = EntityMap(v);
         end
-
-
+        
+        
         function setData(self, varargin)
             % SETDATA  sets the data from a DataFrame to the corresponding AMPL
             % entities
@@ -290,7 +290,7 @@ classdef AMPL < AMPLBase
             % corresponding entities, including the indexing columns which
             % will be joined in a tuple and assigned to the AMPL set
             % "setName".
-
+            
             try
                 if(nargin > 3)
                     error('Too many arguments')
@@ -305,22 +305,28 @@ classdef AMPL < AMPLBase
             end
         end
         %% customized codes
-        function defineVar(self,dataName,indexRange,attribute)
+        function defineVar(self, dataName, indexRange, attribute)
             % e.g. ampl.defineVar(dataName,indexRange,attribute)
             % This function is used to define the variables  for the
             % optimization problem in ampl language
             % for more information, use the command:   help DenfineData
             dataType = "var";
             if ~exist('attribute','var')
-                attribute ="";
+                attribute = "";
             end
             if ~exist("indexRange",'var')
-                indexRange =1;
+                indexRange = 1;
             end
-            results  = defineData(dataType,dataName,indexRange,attribute);
+            results  = defineData(dataType, dataName, indexRange, attribute);
+            printResultsFlag = true; % print on the screen
+            if printResultsFlag
+                fprintf(results)
+                fprintf(newline)
+                
+            end
             self.eval(results)
         end
-
+        
         function defineParam(self,dataName,indexRange,attribute)
             % e.g. ampl.defineParam(dataName,indexRange,attribute)
             % This function is used to define the parameters for the
@@ -328,76 +334,171 @@ classdef AMPL < AMPLBase
             % for more information, use the command:   help DenfineData
             dataType = "param";
             if ~exist('attribute','var')
-                attribute ="";
+                attribute = "";
             end
             if ~exist("indexRange",'var')
-                indexRange =1;
+                indexRange = 1;
             end
-            results  = defineData(dataType,dataName,indexRange,attribute);
+            results  = defineData(dataType, dataName, indexRange, attribute);
+            printResultsFlag = true; % print on the screen
+            if printResultsFlag
+                fprintf(results)
+                fprintf(newline)
+                
+            end
             self.eval(results)
         end
-
-
-        function defineCons(self,consName,data,indexRange)
+        
+        
+        function defineSet(self, setName, setMembers, attributes)
+            % e.g ampl.defineSet('k','1..4 by 2') % k = {1, 3}
+            % e.g ampl.defineSet('k', [1,5,6]) % k = {1, 5, 6};
+            % this function create a set with a give name and
+            % attributes : ordered
+            if ~exist('attributes','var')
+                attributes = "";
+            end
+            if isnumeric(setMembers)
+                setMembers = string(setMembers);
+                setMembers(1:end-1) = setMembers(1:end-1) +',';
+                setMembers = "{" + strjoin(setMembers)+ "}";
+            end
+            results = "redeclare set "+ setName + ":= " +...
+                setMembers+ " " + attributes + ";";
+            printResultsFlag = true; % print on the screen
+            if printResultsFlag
+                fprintf(results)
+                fprintf(newline)
+                
+            end
+            self.eval(results)
+            
+        end
+        
+        
+        
+        function defineCons(self, consName, data, indexRange)
             % e.g. ampl.defineCons(consName,data,indexRange)
             % This function is used to define the constraints for the
             % optimization problem in ampl language
             % for more information, use the command:   help DenfineOp
             description = "constr";
             if ~exist("indexRange",'var')
-                indexRange =1;
+                indexRange = 1;
             end
-            results = defineOP(description,consName,data,indexRange);
+            results = defineOP(description, consName, data, indexRange);
+            printResultsFlag = true; % print on the screen
+            if printResultsFlag
+                fprintf(results)
+                fprintf(newline)
+                
+            end
             self.eval(results)
         end
-
-
-        function defineObj(self,description,objName,data,indexRange)
+        
+        
+        function defineObj(self, description, objName, data, indexRange)
             % e.g ampl.defineObj(description,objName,data,indexRange)
             % This function is used to define the Objective function for the
             % optimization problem in ampl language
             % for more information, use the command:   help DenfineOp
             if ~exist("indexRange",'var')
-                indexRange =1;
+                indexRange = 1;
             end
-            results = defineOP(description,objName,data,indexRange);
+            results = defineOP(description, objName, data, indexRange);
+            printResultsFlag = true; % print on the screen
+            if printResultsFlag
+                fprintf(results)
+                fprintf(newline)
+                
+            end
             self.eval(results)
         end
-
-        function assignParam(self,paramName,data,vector_flag)
+        
+        function assignParam(self, paramName, data, indexValue)
             % e.g. ampl.assignParam(paramName,data)
             % This function is used to assign the value of the parameter in
             % the optimization problem
             % for more information, use the command:   help assignParam
-            if ~exist("vector_flag","var")
-                vector_flag = false;
-            elseif ~islogical(vector_flag)
-                error('vector_flag takes values only false or true')
+            if ~exist("indexValue","var")
+                indexValue = 'default';
             end
-            results = assignParam(paramName,data,vector_flag)
+            
+            if strcmp(indexValue,"auto") % to exatract the sets of the paramerter for auto mode
+                sets= self.getParameter(paramName).getIndexingSets;
+                if isempty(sets)
+                    indexValue = 'default';
+                else
+                    indexValue = strings(1,length(sets));
+                    for i = 1 : length(sets)
+                        inIndex = strfind(sets{i},' in ');
+                        if isempty(inIndex)
+                            setName = sets{i};
+                        else
+                            setName = extractAfter(sets{i},' in ');
+                        end
+                        setValues =evalc(sprintf("self.display('%s')",setName));
+                        setValues = extractAfter(setValues,'=');
+                        setValues = strrep(setValues,';',' ');
+                        setValues = strrep(setValues,newline,' ');
+                        setValues = eval("[" + string(setValues) + "]");
+                        setValues = sort(reshape(setValues,1,[]));
+                        indexValue(i) = "[" + join(string(setValues)) + "]";
+                    end
+                end
+            end
+            
+            results = assignParam(paramName, data, indexValue);
+            
+            printResultsFlag = true; % print on the screen
+            if printResultsFlag
+                fprintf(results)
+                fprintf(newline)
+            end
             self.eval(results)
+            % check if the assigned values within its constraints
+            check_message = evalc(sprintf("self.display('%s')",paramName));
+            if  contains( check_message , 'failed check' )
+                error(check_message)
+            end
         end
-
-        function [myValue, myIndex,rowData] = getParamValue(self,paramName)
-            % e.g. [myValue, myIndex,rowData]= ampl.getParamValue(paramName)
+        
+        function [myValue, myIndex, dataStringRow] = getParamValue(self, paramName)
+            % e.g. [myValue, myIndex,dataStringRow]= ampl.getParamValue(paramName)
             data = self.getParameter(paramName);
             dataExtractFunc
         end
-
-          function [myValue, myIndex,rowData] = getSetValue(self,setName)
-            % e.g. [myValue, myIndex,rowData]= ampl.getVarValue(varName)
+        
+        function [values row_data] = getSetValue(self, setName)
+            % e.g. [myValue]= ampl.getVarValue(varName)
             data = self.getSet(setName);
-            dataExtractFunc
-          end
-
-        function [myValue, myIndex,rowData] = getVarValue(self,varName)
-            % e.g. [myValue, myIndex,rowData]= ampl.getVarValue(varName)
+            if isempty(data)
+                resutls = [];
+            else
+                row_data = data.getValues.toString;
+                dataSplit = split(row_data);
+                dataSplit = dataSplit(strlength(dataSplit)>0); % discard the empty cells
+                dataSplit = dataSplit(2:end);
+                if isempty(dataSplit)
+                    values = "empty set";
+                else
+                    values = string(dataSplit);
+                    values(1:end-1) = values(1:end-1)+", ";
+                    values = join(values');
+                end
+            end
+            
+            
+        end
+        
+        function [myValue, myIndex,dataStringRow] = getVarValue(self, varName)
+            % e.g. [myValue, myIndex,dataStringRow]= ampl.getVarValue(varName)
             data = self.getVariable(varName);
             dataExtractFunc
         end
-
-        function [value, astatus,result,exitcode,message,expandCost] = getObj(self,objName)
-            % e.g. [value, astatus,result,exitcode,message,expand] = ampl.getObj(varName)
+        
+        function [value, astatus, result, exitcode, message, expandCost] = getObj(self, objName)
+            % e.g. [value, astatus,result,exitcode,message,expandCost] = ampl.getObj(varName)
             objClass = self.getObjective(objName);
             value = objClass.value ;
             result = objClass.result;
@@ -406,19 +507,153 @@ classdef AMPL < AMPLBase
             message  = objClass.message ;
             expandCost =  objClass.get ;
         end
-
-
+        
+        function [results names]= expandSets(self)
+            % e.g. [results names]= ampl.expandSets()
+            Temp = self.getSets;
+            names = Temp.toString ;
+            names = extractAfter(names, ":");
+            if isempty(names)
+                results = names;
+            else
+                namesSplit = split(names);
+                namesSplit = namesSplit(strlength(namesSplit)>0);
+                results = "";
+                for c = 1 : length(namesSplit)
+                    Temp2 = self.getSet(namesSplit{c}).toString;
+                    Temp3 = self.getSetValue(namesSplit{c})+newline;
+                    results = [results; '------------------------------------------------------------------------------------------------------'; ...
+                        newline; string(Temp2); newline; string(Temp3); ];
+                end
+            end
+            results = join(results);
+        end
+        
+        function [results names]= expandObjs(self)
+            % e.g. [results names]= ampl.expandObjs()
+            Temp = self.getObjectives;
+            names = Temp.toString;
+            marker = strfind(names, ":");
+            if isempty(marker)
+                results = names;
+            else
+                names = split(names(marker+3:end-1));
+                results = string(newline);
+                for c = 1 : length(names)
+                    Temp2 = self.getObjective(names{c});
+                    results = [results; '------------------------------------------------------------------------------------------------------'; ...
+                        newline; string(Temp2.toString); newline; string(Temp2.get.toString)];
+                end
+            end
+            results = join(results);
+        end
+        
+        
+        function [results names]= expandCons(self)
+            % e.g. [results names]= ampl.expandCons()
+            Temp = self.getConstraints;
+            names = Temp.toString ;
+            marker = strfind(names, ":");
+            if isempty(marker)
+                results = names;
+            else
+                names =split(names(marker + 3 : end - 1));
+                results = string(newline);
+                for c = 1 : length(names)
+                    Temp2 = self.getConstraint(names{c});
+                    Temp3 = evalc(sprintf("self.eval('expand %s;')", names{c}));
+                    results = [results; '------------------------------------------------------------------------------------------------------'; ...
+                        newline; string(Temp2.toString); newline; string(Temp3)];
+                end
+            end
+            results = join(results);
+        end
+        
+        
+        function [results names]= expandParams(self)
+            % e.g. [results names]= ampl.expandParams()
+            Temp = self.getParameters;
+            names = Temp.toString;
+            marker = strfind(names, ":");
+            if isempty(marker)
+                results = names;
+            else
+                names = split(names(marker + 3 : end - 1));
+                results = string(newline);
+                for c = 1 : length(names)
+                    try
+                        Temp2 = self.getParameter(names{c}).toString;
+                        [~,~,Temp3] = self.getParamValue(names{c});
+                    catch ME
+                        Temp3 =  splitlines(getReport(ME));
+                        Temp3 = Temp3{2} + string(newline);
+                    end
+                    results = [results; '-------------------------------------------------------------------------------------------------------';...
+                        newline ;   string(Temp2);     newline ;string(Temp3);];
+                end
+            end
+            results = join(results);
+        end
+        
+        
+        
+        function [results names]= expandVars(self)
+            % e.g. [results names]= ampl.expandVars()
+            Temp = self.getVariables;
+            names = Temp.toString ;
+            marker = strfind(names, ":");
+            if isempty(marker)
+                results = names;
+            else
+                names =split(names(marker + 3 : end - 1));
+                results = string(newline);
+                for c = 1 : length(names)
+                    try
+                        Temp2 = self.getVariable(names{c}).toString;
+                        [~,~, Temp3] = self.getVarValue(names{c});
+                    catch ME
+                        Temp3 =  splitlines(getReport(ME));
+                        Temp3 = Temp3{2} + string(newline);
+                    end
+                    results = [results; '------------------------------------------------------------------------------------------------------';...
+                        newline ;string(Temp2); newline ;string(Temp3);];
+                end
+            end
+            results = join(results);
+        end
+        
+        function results = expandAll(self,filename)
+            % e.g, results = expandAll(self,filename)
+            results = [self.expandSets;self.expandParams;
+                self.expandObjs;self.expandCons;
+                self.expandVars];
+            printResultsFlag = false; % print on the screen
+            if printResultsFlag
+                disp(results)
+                disp(newline)
+            end
+            results = join(results);
+            if ~exist('filename','var')
+                filename = 'expandAll';
+            else
+                filename = "expandAll_"+filename;
+            end
+            fileID = fopen(filename + ".txt",'w');
+            fprintf(fileID, results);
+            fclose(fileID);
+        end
+        
         %
-
+        
         %  exitcode = ;
         %  message = ;
-
-
-
+        
+        
+        
     end
-
+    
     %%
-
-
+    
+    
 end
 

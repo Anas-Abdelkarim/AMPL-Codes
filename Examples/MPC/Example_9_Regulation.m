@@ -56,7 +56,7 @@ u_min = -1;
 u_max = 1;
 
 %% Definition of the Model Predictive Controller
-N = 50000;
+N = 5;
 N_sim = 15;
 
 

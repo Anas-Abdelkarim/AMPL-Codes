@@ -104,7 +104,7 @@ tic
 
 
 %%% using Ampl
-N = 5000;
+N = 5;
 nx = 2; % number of states
 nu = 1; % number of inputs
 pr = 1; % number of outputs

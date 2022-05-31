@@ -5,7 +5,8 @@ if isempty(data)
         rowData = [];
 else
 
-    dataString = split(data.getValues.toString);
+    dataStringRow = data.getValues.toString;
+    dataString = split(dataStringRow);
     dataString = dataString(strlength(dataString)>0); % discard the empty cells
 
     dataLength = length(dataString);
@@ -18,18 +19,19 @@ else
     else
         % find first "|"
         markIndex = find(strcmp(dataString,'|'));
-        rowDataLength = markIndex(1);
-        rowData(:,rowDataLength) =  dataString(markIndex+1);
-        for l = 1 : rowDataLength-1
+        firtMarkIndex = markIndex(1);
+        rowData(:,firtMarkIndex) =  dataString(markIndex+1);
+        for l = 1 : firtMarkIndex-1
             rowData(:,l) =  dataString(markIndex-(markIndex(1)-l));
         end
 
          myValue =str2num(char(rowData(2:end,end))); % to convert to the matrix
 
         % process the remaining columns of myIndexes
-        reshapeMatrix = zeros(1,rowDataLength-1);
-        for l = 1 : rowDataLength-1
-            myIndex{l} =unique(rowData(2:end,l));
+        reshapeMatrix = zeros(1,firtMarkIndex-1);
+        for l = 1 : firtMarkIndex-1
+            myIndex{l} =unique(rowData(2:end,l),'stable');
+            % 
             reshapeMatrix(l) = length(myIndex{l});
         end
 

@@ -69,7 +69,7 @@ else
     results = "model; " + strcat(results{:});
 end
 %amplcommand = "" ;
-results
+
 
 
 
