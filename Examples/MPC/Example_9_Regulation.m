@@ -2,13 +2,12 @@
 %
 % Regulation of an LTI System using AMPL
 %
-% Related Slides:         9-35 to 9-37
 %
 %
 
 % Model Predictive Control
 %
-% Jun.-Prof. Dr.-Ing. Daniel Görges
+% Jun.-Prof. Dr.-Ing. Daniel GÃ¶rges
 % Juniorprofessor for Electromobility
 % Department of Electrical and Computer Engineering
 % University of Kaiserslautern
@@ -22,7 +21,9 @@ close all;
 
 
 %%%%%%%%%%%%%%%%%%%%%%% Ampl Environment  %%%%%%%%%%%%%%%%%%%%%%%%%
-amplPathDir = 'D:\programs\ampl.mswin64';
+currentPath = which('Example_9_Regulation.m');
+Index_amplapi = findstr(currentPath,'\amplapi');
+amplPathDir = currentPath(1:Index_amplapi-1);
 %% add path for the customized codes
 addpath(amplPathDir+ "\amplapi\matlab\customizedCodes")
 run(amplPathDir + "\amplapi\matlab"+  "\setUp.m")
@@ -111,6 +112,7 @@ preCalcTimeAmpl = toc;
 
 %% simulation loop  of the closed loop
 x{1} =  [1; 1.5]; % x_0
+ampl.eval('option show_stats 1;')
 tic 
 for i = 1 : N_sim 
 

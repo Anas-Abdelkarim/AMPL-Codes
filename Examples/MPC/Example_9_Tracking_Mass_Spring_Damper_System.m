@@ -1,17 +1,17 @@
 %% Example_9_Tracking_Mass_Spring_Damper_System.m
 %
 % Tracking Control of a Mass-Spring-Damper System
-%
-% Related Slides:         9-23
-% Related Simulink Model: none
+% 
 %
 % Experiments:            Investigate the influence of the state weighting matrix
 %
+%
 % Remarks:                Requires MPT (people.ee.ethz.ch/~mpt/3/)
+%                         using AMPL instead of MPT toolbox
 %
 % Model Predictive Control
 %
-% Jun.-Prof. Dr.-Ing. Daniel Görges
+% Jun.-Prof. Dr.-Ing. Daniel GÃ¶rges
 % Juniorprofessor for Electromobility
 % Department of Electrical and Computer Engineering
 % University of Kaiserslautern
@@ -20,84 +20,15 @@
 % Please report any error to goerges@eit.uni-kl.de
 
 %% Clear
-clear;
-%{
-%% Modeling of the Mass-Spring-Damper System
-h = 0.5;                               % sampling period
-m = 4;                                 % mass
-alpha = 1/m;                           % parameter
-beta = 1/m^2;                          % parameter
-c = 2;                                 % stiffness constant
-b = 1;                                 % damping constant
-A = [1 h; -c*h*alpha 1-b*h*alpha];
-B = [h^2/2*alpha; h*alpha-b*h^2/2*beta];
-Ts = 1;
-sys = LTISystem('A',A,'B',B,'Ts',Ts)
-x_0 = [0; 0];
-
-tic 
-sys.initialize(x_0)
-
-%% Definition of the Cost Function
-Q = diag([10000 1]);
-sys.x.penalty = QuadFunction(Q);
-R = eye(sys.nu);
-sys.u.penalty = QuadFunction(R);
-
-%% Definition of the Constraints
-sys.x.min = [-1; -0.5];
-sys.x.max = [1; 0.5];
-sys.u.min = -1.5;
-sys.u.max = 1.5;
-
-%% Definition of the Terminal Cost
-P = sys.LQRPenalty;
-sys.x.with('terminalPenalty');
-sys.x.terminalPenalty = P;
-
-%% Definition of the Terminal Constraint Set
-X_N = sys.LQRSet;
-sys.x.with('terminalSet');
-sys.x.terminalSet = X_N;
-
-%% Definition of a Time-Varying State Reference
-sys.x.with('reference');
-sys.x.reference = 'free';
-
-%% Definition of the Model Predictive Controller
-N = 5;
-ctrl = MPCController(sys,N)
-
-%% Definition of the Closed-Loop System
-loop = ClosedLoop(ctrl,sys)
-
-%% Computation of the Closed-Loop Input and State Sequence
-N_sim = 50;
-x_ref = 0.5*[zeros(1,10) ones(1,20) zeros(1,N_sim-10-20); zeros(1,N_sim)];
-data = loop.simulate(x_0,N_sim,'x.reference',x_ref)
-
-%% Visualization of the Closed-Loop Input and Input Sequence and the Reference Sequence
-figure;
-subplot(2,1,1);
-plot(0:length(data.U)-1,data.U);
-ylabel('u');
-subplot(2,1,2);
-hold on;
-plot(0:length(data.X)-1,data.X);
-stairs(0:length(x_ref(1,:))-1,x_ref(1,:),'b:');
-ylabel('x');
-legend('x_1','x_2','x_{1,ref}');
-xlabel('t');
-
-time_toolbox = toc;
-%}
 clc
 clear all  
 
 %%%%%%%%%%%%%%%%%%%%%%% Ampl Environment  %%%%%%%%%%%%%%%%%%%%%%%%%
-amplPathDir = 'D:\programs\ampl.mswin64';
-%% add path for the customized codes
-addpath(amplPathDir+ "\amplapi\matlab\customizedCodes")
+currentPath = which('Example_9_Tracking_Mass_Spring_Damper_System.m');
+Index_amplapi = findstr(currentPath,'\amplapi');
+amplPathDir = currentPath(1:Index_amplapi);
+%% add path for the AMPL repository
+addpath(genpath(amplPathDir+ "\amplapi\matlab"))
 run(amplPathDir + "\amplapi\matlab"+  "\setUp.m")
 
 tic
@@ -250,7 +181,10 @@ MPC.defineCons('input_constraints',input_constraints,"k in 0..N-1");
 % initial values
 MPC.defineCons('x_initial_cons',  'x_tilde [i,0] = x_initial[i] - x_ss[i]',"i in 1..2 ")
 
-
+display('TC report')
+TC.eval('option show_stats 1;')
+display('MPC report')
+MPC.eval('option show_stats 1;')
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  Simultion %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 x{1} =  [0; 0]; % x_0
 
@@ -341,10 +275,82 @@ xlabel('t');
 time_ampl = toc;
 
 
+MPT_installed_flag = false;
+if MPT_installed_flag
+%% Modeling of the Mass-Spring-Damper System
+h = 0.5;                               % sampling period
+m = 4;                                 % mass
+alpha = 1/m;                           % parameter
+beta = 1/m^2;                          % parameter
+c = 2;                                 % stiffness constant
+b = 1;                                 % damping constant
+A = [1 h; -c*h*alpha 1-b*h*alpha];
+B = [h^2/2*alpha; h*alpha-b*h^2/2*beta];
+Ts = 1;
+sys = LTISystem('A',A,'B',B,'Ts',Ts)
+x_0 = [0; 0];
+
+tic 
+sys.initialize(x_0)
+
+%% Definition of the Cost Function
+Q = diag([10000 1]);
+sys.x.penalty = QuadFunction(Q);
+R = eye(sys.nu);
+sys.u.penalty = QuadFunction(R);
+
+%% Definition of the Constraints
+sys.x.min = [-1; -0.5];
+sys.x.max = [1; 0.5];
+sys.u.min = -1.5;
+sys.u.max = 1.5;
+
+%% Definition of the Terminal Cost
+P = sys.LQRPenalty;
+sys.x.with('terminalPenalty');
+sys.x.terminalPenalty = P;
+
+%% Definition of the Terminal Constraint Set
+X_N = sys.LQRSet;
+sys.x.with('terminalSet');
+sys.x.terminalSet = X_N;
+
+%% Definition of a Time-Varying State Reference
+sys.x.with('reference');
+sys.x.reference = 'free';
+
+%% Definition of the Model Predictive Controller
+N = 5;
+ctrl = MPCController(sys,N)
+
+%% Definition of the Closed-Loop System
+loop = ClosedLoop(ctrl,sys)
+
+%% Computation of the Closed-Loop Input and State Sequence
+N_sim = 50;
+x_ref = 0.5*[zeros(1,10) ones(1,20) zeros(1,N_sim-10-20); zeros(1,N_sim)];
+data = loop.simulate(x_0,N_sim,'x.reference',x_ref)
+
+%% Visualization of the Closed-Loop Input and Input Sequence and the Reference Sequence
+figure;
+subplot(2,1,1);
+plot(0:length(data.U)-1,data.U);
+ylabel('u');
+subplot(2,1,2);
+hold on;
+plot(0:length(data.X)-1,data.X);
+stairs(0:length(x_ref(1,:))-1,x_ref(1,:),'b:');
+ylabel('x');
+legend('x_1','x_2','x_{1,ref}');
+xlabel('t');
+
+time_toolbox = toc;
+time_toolbox
+
+end 
+
 
 
 time_ampl
-time_toolbox
-
 
 
