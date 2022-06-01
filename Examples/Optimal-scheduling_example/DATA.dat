@@ -19,7 +19,7 @@ param initial_values        :=  1  1
 			                  	5  0
 				                6  0 ; # intial values 
 
-param N := 10;# 15 years   131400
+param N := 30;# 15 years   131400
 
 param Q :    1   2  3	4	5	6 :=  
   1 0.99999967075480389 0.0049875199849479255 0.000999500001931637 0 0 0 

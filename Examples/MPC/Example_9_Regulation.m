@@ -24,8 +24,8 @@ close all;
 currentPath = which('Example_9_Regulation.m');
 Index_amplapi = findstr(currentPath,'\amplapi');
 amplPathDir = currentPath(1:Index_amplapi-1);
-%% add path for the customized codes
-addpath(amplPathDir+ "\amplapi\matlab\customizedCodes")
+%% add path for the AMPL repository
+addpath(genpath(amplPathDir+ "\amplapi\matlab"))
 run(amplPathDir + "\amplapi\matlab"+  "\setUp.m")
 
 

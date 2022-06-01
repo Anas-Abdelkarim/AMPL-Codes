@@ -16,7 +16,6 @@ amplPathDir = currentPath(1:Index_amplapi);
 %% add path for the AMPL repository
 addpath(genpath(amplPathDir+ "\amplapi\matlab"))
 run(amplPathDir + "\amplapi\matlab"+  "\setUp.m")
-amplPathDir = 'D:\programs\ampl.mswin64';
 
 
 
@@ -92,7 +91,7 @@ ampl.defineCons("initial_values_constraints",initial_values_constraints,"i in 1.
 
 
 % set values
- N = 10 ;
+ N = 30;
  n_full_maintenance   =  1  ;
  n_partial_maintenance =  2;
  Ts = 1; %  one hour  
@@ -126,7 +125,7 @@ ampl.assignParam("N  n_full_maintenance n_partial_maintenance Ts",[N n_full_main
 ampl.assignParam("initial_values",initial_values)
 ampl.assignParam("Ma",Ma)
 ampl.assignParam("Mb",Mb)
-ampl.assignParam("Q",Q)s
+ampl.assignParam("Q",Q)
 
 %% solve the optimization problem 
 ampl.eval('option show_stats 1;')
