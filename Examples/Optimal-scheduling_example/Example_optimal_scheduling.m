@@ -20,28 +20,11 @@ run(amplPathDir + "\amplapi\matlab"+  "\setUp.m")
 
 
 %% add path for the customized codes
-ampl1 = runAMPL(amplPathDir);
-%ampl = AMPL(amplPathDir);
 ampl = runAMPL(amplPathDir);
 
 
-%% Method 1
-%read from .mod and .dat files
-clearvars ampl1
-ampl1 = runAMPL(amplPathDir);
-ampl1.read([strcat(currentPath(1:end-29),'\Model.mod')]);
-ampl1.readData([strcat(currentPath(1:end-29),'\DATA.dat')]);
-ampl1.eval('option show_stats 1;')
-ampl1.solve
-costValue = ampl1.getValue("cost_function")
-aClass = ampl1.getVariable("a")
-a = aClass.getValues;
-a = a.toTable;
-a = cell2mat(a{:,2});
-ampl1.getObj('cost_function')
-ampl1.close
 
-%% Method 2
+%% Method 1
 % model mode
 % define the parameters
 ampl.defineParam("N",1,"integer") % definde N equivalent to ampl.eval('model; param N integer;)
@@ -144,3 +127,20 @@ x1 = x(1,:)';
 
 % objective function 
  [value, astatus,result,exitcode,message,expandCost] = ampl.getObj('cost_function')
+ 
+ 
+ %% Method 2
+%read from .mod and .dat files
+ampl1 = runAMPL(amplPathDir);
+ampl1.read([strcat(currentPath(1:end-29),'\Model.mod')]);
+ampl1.readData([strcat(currentPath(1:end-29),'\DATA.dat')]);
+ampl1.eval('option show_stats 1;')
+ampl1.solve
+costValue = ampl1.getValue("cost_function")
+aClass = ampl1.getVariable("a")
+a = aClass.getValues;
+a = a.toTable;
+a = cell2mat(a{:,2});
+ampl1.getObj('cost_function')
+ampl1.close
+
