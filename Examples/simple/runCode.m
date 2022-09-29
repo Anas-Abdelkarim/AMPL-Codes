@@ -17,7 +17,7 @@ run(amplPathDir + "\amplapi\matlab"+  "\setUp.m")
 
 %% Method 1
 % run AMPL
-ampl = AMPL(amplPathDir); 
+ampl = runAMPL(amplPathDir); 
 % model
 ampl.eval('model; param a; var x;')
 ampl.eval('minimize cost: x**2;')
@@ -41,7 +41,7 @@ ampl.close
 
 %% Method 2
 % run AMPL
-ampl = AMPL(amplPathDir); 
+ampl = runAMPL(amplPathDir); 
 % read the model
 ampl.read(["Model.mod"])
 % read the data 
