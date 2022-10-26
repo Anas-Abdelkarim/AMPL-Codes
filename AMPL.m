@@ -189,7 +189,19 @@ classdef AMPL < AMPLBase
             if(isempty(v))
                 result = [];
             else
-                result = Constraint(v);
+                result = string(v);
+                try             
+                 result = evalc(sprintf("self.eval('expand %s;')", name))+...
+                          """"""""""""""""""""""""""""""""""""""""""""""""""""""+...
+                          newline+ result+ newline+...
+                          """""""""""""""""""""""""""""""""""""""""""""""""""""" 
+                          
+                      
+                 
+              
+                   
+                         
+                end
             end
         end
         
@@ -560,10 +572,10 @@ classdef AMPL < AMPLBase
                 names =split(names(marker + 3 : end - 1));
                 results = string(newline);
                 for c = 1 : length(names)
-                    Temp2 = self.getConstraint(names{c});
+                    Temp2 = string(self.impl.getConstraint(names{c}));
                     Temp3 = evalc(sprintf("self.eval('expand %s;')", names{c}));
                     results = [results; '------------------------------------------------------------------------------------------------------'; ...
-                        newline; string(Temp2.toString); newline; string(Temp3)];
+                        newline+ Temp2+ newline+ newline+ string(Temp3)];
                 end
             end
             results = join(results);

@@ -57,33 +57,33 @@ ampl.defineVar("a f  p ","0..N","binary")
 
 %%
 % the objective function
-cost_function = [' 10000/(2*N)*sum { k in 0..N-1} (                    ' ...
-    ' x[3,k]  +  x[3,k+1] + x[4,k]  +  x[4,k+1] +         ' ...
-    ' x[5,k]  +  x[5,k+1] +  x[6,k]  + x[6,k+1] )         ' ];
-
+cost_function = ['10000/(2*N)*sum { k in 0..N-1} (             ' ...
+                 'x[3,k]  +  x[3,k+1] + x[4,k]  +  x[4,k+1] +  ' ...
+                 'x[5,k]  +  x[5,k+1] +  x[6,k]  + x[6,k+1] )  '];
 ampl.defineObj("min","cost_function",cost_function);
 
-% constraints
+
+
+%% constraints
+% dynamics
 % to write the dynamics there are many ways and all are equivallent
 wayNumber  = 1;
 switch wayNumber
     case 1 % first way % pure AMPL commands
-        dynamics = [' x[i,k+1] =                                             ' ...
-            ' (a[k] * sum { c in 1..6} Q[i,c]  * x[c,k]) +          ' ...
-            ' (f[k] * sum { c in 1..6} Q[i,c]*sum { j in 1..6}  Ma[c,j]*x[j,k])+  ' ...
-            ' (p[k] * sum { c in 1..6} Q[i,c]*sum { j in 1..6}  Mb[c,j]*x[j,k])' ];
+        dynamics = [' x[i,k+1] =                                                 ' ...
+            ' (a[k] * sum { c in 1..6} Q[i,c]  * x[c,k]) +                       ' ...
+            ' (f[k] * sum { c in 1..6} Q[i,c]*sum { j in 1..6}  Ma[c,j]*x[j,k])+ ' ...
+            ' (p[k] * sum { c in 1..6} Q[i,c]*sum { j in 1..6}  Mb[c,j]*x[j,k])  ' ];
         ampl.defineCons("dynamics",dynamics,"i in 1..6, k in 0..N-1" );
         
-    case 2   % second way % we use multiply function 
-            
-         dynamics  =  "x[i,k+1] =  " +...
+    case 2   % second way % we use multiply function
+        dynamics  =  "x[i,k+1] =  " +...
             "  a[k] *" + multiply("Q.T[i,1..6]","x[1..6,k]")+ ...
             "+ f[k] *" + multiply("Q.T[i,1..6]"," Ma[1..6,1..6]","x[1..6,k]")+...
             "+ p[k] *" + multiply("Q.T[i,1..6]"," Mb[1..6,1..6]","x[1..6,k]");
         ampl.defineCons("dynamics",dynamics,"i in 1..6, k in 0..N-1" ); %we need to clarify what i and k in constraints indexRange
-         
-    case 3  % Thrid way % we use both multiply and expand functions 
-           
+        
+    case 3  % Thrid way % we use both multiply and expand functions
         dynamics = expand("x[1..6,k+1] = ") +...
             "  a[k] *" + multiply("Q[1..6,1..6]","x[1..6,k]")+ ...
             "+ f[k] *" + multiply("Q[1..6,1..6]"," Ma[1..6,1..6]","x[1..6,k]")+ ...
@@ -91,11 +91,25 @@ switch wayNumber
         ampl.defineCons("dynamics",dynamics,"k in 0..N-1" );
     case 4  % replace every k in dynamics in case 3  to 1..N-1; being N-1 a value
         dynamics = [];
-        for k = 1 : 29 % where 3 is N-1
+        N = 30; % where 3 is N-1
+        for k = 1 : N-1
             dynamics = [dynamics; expand(sprintf("x[1..6,%u]=",k+1)) +...
                 sprintf(  "a[%u]*",k) + multiply("Q[1..6,1..6]",sprintf("x[1..6,%u]",k))+ ...
                 sprintf("+ f[%u]*",k) + multiply("Q[1..6,1..6]"," Ma[1..6,1..6]",sprintf("x[1..6,%u]",k))+ ...
                 sprintf("+ p[%u]*",k) + multiply("Q[1..6,1..6]"," Mb[1..6,1..6]",sprintf("x[1..6,%u]",k))];
+        end
+        ampl.defineCons("dynamics",dynamics);
+    case 5  % feed the constants directly
+        dynamics = [];
+        N = 30; % where 3 is N-1
+        Q = [0.99999967075480389    0.0049875199849479255   0.000999500001931637     0 0 0;  2.9925119909687547E-7  0.99501247994018693     1.4970037065390959E-10   0 0 0;         1.1994000023179647E-8  2.9940074130781927E-11  0.999000499839371        0 0 0;        8.6399985765747359E-9  2.1564042584720887E-11  4.3185598853904993E-12   1 0 0;         5.7599990510498259E-9  1.4376028389813928E-11  2.8790399235936667E-12   0 1 0;         3.599999406906139E-9   8.9850177436337E-12     1.7993999522460411E-12   0 0 1;];
+        Ma = [1  0  0  0  0  0;          0  1  0  0  0  0;          0  0  1  1  1  0;          0  0  0  0  0  0;       0  0  0  0  0  0;          0  0  0  0  0  1];
+        Mb = [1  0  0  0  0  0;          0  1  0  0  0  0;          0  0  1  1  0  0;          0  0  0  0  0  0;          0  0  0  0  1  0;          0  0  0  0  0  1];
+        for k = 1 : N-1
+            dynamics = [dynamics; expand(sprintf("x[1..6,%u]=",k+1)) +...
+                sprintf(  "a[%u]*",k) + multiply(Q,sprintf("x[1..6,%u]",k))+ ...
+                sprintf("+ f[%u]*",k) + multiply(Q, Ma,sprintf("x[1..6,%u]",k))+ ...
+                sprintf("+ p[%u]*",k) + multiply(Q,Mb,sprintf("x[1..6,%u]",k))];
         end
         ampl.defineCons("dynamics",dynamics);
 end
@@ -104,52 +118,58 @@ end
 
 
 int = 'a[0]=1 ';
-system_active = ['sum { j in 0..N-1} a[j] =  N - ' ...
-    '(n_full_maintenance + n_partial_maintenance )'];
-full_maintenance_active= 'sum { j in 0..N-1} f[j] =  n_full_maintenance';
-Partial_maintenance_active = 'sum { j in 0..N-1} p[j] =  n_partial_maintenance';
-one_active = ' a[j] + f[j] + p[j] = 1 ';
-initial_values_constraints = 'x[i,0] = initial_values[i]'    ;
-
-
-
 ampl.defineCons("int",int);
+
+system_active = ['sum { j in 0..N-1} a[j] =  N - ' ...
+                 '(n_full_maintenance + n_partial_maintenance )'];
 ampl.defineCons("system_active",system_active)
+
+full_maintenance_active= 'sum { j in 0..N-1} f[j] =  n_full_maintenance';
 ampl.defineCons("full_maintenance_active",full_maintenance_active)
+
+Partial_maintenance_active = 'sum { j in 0..N-1} p[j] =  n_partial_maintenance';
 ampl.defineCons("Partial_maintenance_active",Partial_maintenance_active)
+
+one_active = ' a[j] + f[j] + p[j] = 1 ';
 ampl.defineCons("one_active",one_active,"j in 0..N")
+
+initial_values_constraints = 'x[i,0] = initial_values[i]'    ;
 ampl.defineCons("initial_values_constraints",initial_values_constraints,"i in 1..6")
 
 
 % set values
-N = 30;
+if ~exist('N','var')
+    N = 30;
+end
+
 n_full_maintenance   =  1;
 n_partial_maintenance = 2;
 Ts = 1; %  one hour
 initial_values        = [  1 0 0 0 0 0] ;%  intial values
 
-Q =  [0.99999967075480389    0.0049875199849479255   0.000999500001931637     0 0 0
-    2.9925119909687547E-7  0.99501247994018693     1.4970037065390959E-10   0 0 0
-    1.1994000023179647E-8  2.9940074130781927E-11  0.999000499839371        0 0 0
-    8.6399985765747359E-9  2.1564042584720887E-11  4.3185598853904993E-12   1 0 0
-    5.7599990510498259E-9  1.4376028389813928E-11  2.8790399235936667E-12   0 1 0
-    3.599999406906139E-9   8.9850177436337E-12     1.7993999522460411E-12   0 0 1];
 
-
-Ma  = [      1  0  0  0  0  0
-    0  1  0  0  0  0
-    0  0  1  1  1  0
-    0  0  0  0  0  0
-    0  0  0  0  0  0
-    0  0  0  0  0  1];
-
-
-Mb =   [    1  0  0  0  0  0
-    0  1  0  0  0  0
-    0  0  1  1  0  0
-    0  0  0  0  0  0
-    0  0  0  0  1  0
-    0  0  0  0  0  1];
+if ~exist('Q','var')
+    Q = [0.99999967075480389    0.0049875199849479255   0.000999500001931637     0 0 0
+         2.9925119909687547E-7  0.99501247994018693     1.4970037065390959E-10   0 0 0
+         1.1994000023179647E-8  2.9940074130781927E-11  0.999000499839371        0 0 0
+         8.6399985765747359E-9  2.1564042584720887E-11  4.3185598853904993E-12   1 0 0
+         5.7599990510498259E-9  1.4376028389813928E-11  2.8790399235936667E-12   0 1 0
+         3.599999406906139E-9   8.9850177436337E-12     1.7993999522460411E-12   0 0 1];
+    
+    Ma = [1  0  0  0  0  0
+          0  1  0  0  0  0
+          0  0  1  1  1  0
+          0  0  0  0  0  0
+          0  0  0  0  0  0
+          0  0  0  0  0  1];
+    
+    Mb = [1  0  0  0  0  0
+          0  1  0  0  0  0
+          0  0  1  1  0  0
+          0  0  0  0  0  0
+          0  0  0  0  1  0
+          0  0  0  0  0  1];
+end
 
 % defind the data
 ampl.assignParam("N  n_full_maintenance n_partial_maintenance Ts",[N n_full_maintenance n_partial_maintenance Ts])
