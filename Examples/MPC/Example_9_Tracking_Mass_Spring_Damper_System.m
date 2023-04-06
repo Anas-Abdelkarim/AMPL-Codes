@@ -25,11 +25,21 @@ clear all
 
 %%%%%%%%%%%%%%%%%%%%%%% Ampl Environment  %%%%%%%%%%%%%%%%%%%%%%%%%
 currentPath = which('Example_9_Tracking_Mass_Spring_Damper_System.m');
-Index_amplapi = findstr(currentPath,'\amplapi');
-amplPathDir = currentPath(1:Index_amplapi);
+if ispc
+    backslash = "\";
+else
+     backslash = "/";
+end 
+Index_amplapi = findstr(currentPath, backslash +'amplapi');
+amplPathDir = currentPath(1:Index_amplapi-1);
 %% add path for the AMPL repository
-addpath(genpath(amplPathDir+ "\amplapi\matlab"))
-run(amplPathDir + "\amplapi\matlab"+  "\setUp.m")
+addpath(genpath(amplPathDir+ backslash+ "amplapi" +backslash+ "matlab"))
+run(amplPathDir + backslash+ "amplapi" +backslash+ "matlab" + backslash+ "setUp.m")
+
+
+
+
+
 
 tic
 
@@ -70,8 +80,8 @@ x_ref = 0.5*[zeros(1,10) ones(1,20) zeros(1,N_sim-10-20); zeros(1,N_sim)];
 
 %%%%%%%%%%%%%%%%%%%%%%%% Preparing the OP in AMPL %%%%%%%%%%%%%%%%%%%%%%
 
-TC = runAMPL(amplPathDir); % OP of traget calculation
-MPC = runAMPL(amplPathDir); % OP for MPC
+TC = AMPC(amplPathDir); % OP of traget calculation
+MPC = AMPC(amplPathDir); % OP for MPC
 
 
 
@@ -207,6 +217,7 @@ TC.assignParam('u_ss_unc',u_ss_unc{i})
 TC.assignParam('r',r)
 
 % solve the OP
+TC.eval("option solver CPLEX;")
 TC.solve
 
 
@@ -233,6 +244,7 @@ MPC.assignParam('x_initial',x{i})
 
 MPC.assignParam("x_initial",x{i})
 % solve the OP
+MPC.eval("option solver CPLEX;")
 MPC.solve
 
 % extract  the decision variabels X_tilde and U_tilde and the cost 

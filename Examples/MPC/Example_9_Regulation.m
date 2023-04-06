@@ -22,14 +22,19 @@ close all;
 
 %%%%%%%%%%%%%%%%%%%%%%% Ampl Environment  %%%%%%%%%%%%%%%%%%%%%%%%%
 currentPath = which('Example_9_Regulation.m');
-Index_amplapi = findstr(currentPath,'\amplapi');
+if ispc
+    backslash = "\";
+else
+     backslash = "/";
+end 
+Index_amplapi = findstr(currentPath, backslash +'amplapi');
 amplPathDir = currentPath(1:Index_amplapi-1);
 %% add path for the AMPL repository
-addpath(genpath(amplPathDir+ "\amplapi\matlab"))
-run(amplPathDir + "\amplapi\matlab"+  "\setUp.m")
+addpath(genpath(amplPathDir+ backslash+ "amplapi" +backslash+ "matlab"))
+run(amplPathDir + backslash+ "amplapi" +backslash+ "matlab" + backslash+ "setUp.m")
 
 
-
+ispc
 
 %%%%%%%%%%%%%%%%%%%%%%% MPC Definition  %%%%%%%%%%%%%%%%%%%%%%%%%
 % the optimization problem:
@@ -62,7 +67,7 @@ N_sim = 15;
 
 
 tic 
-ampl = runAMPL(amplPathDir);
+ampl = AMPC(amplPathDir);
 
 
 
