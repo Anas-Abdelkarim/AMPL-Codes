@@ -1,38 +1,3 @@
-function  results = multiply(varargin)
-% e.g  results = multiply("x.T[1..2, k]", 'Q1[1..2, 1..2 ]', "x[ 1..2, k]")
-% this function multiplies matrices of string array for ampl program
-% example for the inputs arguments
-% 1- 'R' for scalar %  do not use 'R[1..1]' if R has no indexes in AMPL
-% 1- 'x.T[k , 0 . . 2  ]', .T for transpose , create vector of indexes 0 ,1,2 , k is constant no thing to do with the matrix indexes
-% 2- 'Q1[0..2,m,k, 2..5 ]', create matrix of row indexes 0 ,1,2 and column indexes from 2 to 3  m, and k is constant no thing to do with the matrix indexes
-% m where m is a numeric array
-
-
-
-% number of inputs
-numInputs =  length(varargin);
-
-for k = 1 : numInputs
-    try  % if it is alread expaned
-        [stringArray{k}, arraySize{k}]  =  expand(varargin{k});
-    catch
-        stringArray{k} = string(varargin{k});
-        arraySize{k} =size(stringArray{k} );
-    end
-
-end
-
-for k = 1 : numInputs - 1
-    if k == 1
-        [results resutlsSize] = multiply2stringArrays(stringArray{k},stringArray{k+1},arraySize{k},arraySize{k+1});
-    else
-        [results resutlsSize] = multiply2stringArrays(results,stringArray{k+1},resutlsSize,arraySize{k+1});
-    end
-end
-
-end
-
-
 function [results, arraySizeResult] =multiply2stringArrays(stringArray1,stringArray2,arraySize1,arraySize2)
 % this function multiplies matrices of string array for ampl program
 % stringArrayIn1(2) first and second stringArrays
@@ -41,7 +6,7 @@ function [results, arraySizeResult] =multiply2stringArrays(stringArray1,stringAr
 
 % check if we multiply with scalar
 if max(arraySize1) == 1 ||  max(arraySize2) == 1
-    results =  stringArray1 + "*" +  stringArray2;
+    results =  '((' +  stringArray1 + "*" +  '(' + stringArray2 + '))';
     arraySizeResult = max(arraySize1,arraySize2);
 else
 
@@ -59,6 +24,10 @@ else
 
     % create empty array
     results = strings(arraySizeResult);
+    % to quote the elements with parentheses
+    stringArray1 = "(" + stringArray1 + ")" ;
+    stringArray2 = "(" + stringArray2 + ")" ;
+
     stringArray1 = stringArray1+"*";
     stringArray2(1:end-1,:) = stringArray2(1:end-1,:)+"+";
 

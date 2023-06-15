@@ -40,6 +40,7 @@ ampl.solve()
 x = ampl.getVarValue('x');
 a = ampl.getParamValue('a');
 % close AMPL
+
 ampl.close
 
 
@@ -63,3 +64,9 @@ x = ampl.getVarValue('x')
 a = ampl.getParamValue('a')
 % close AMPL
 ampl.close
+
+clc
+ampl = AMPC(amplPathDir); 
+ampl.eval("  reset; # clear previous definitions       model; # declare the model " +...
+      " var x;      param a;      param b;      minimize cost: (x**2-a)^2;      s.t. constraints: x>=b;" )
+ampl.eval("data; param b := -1;data; param a :=5;  option solver gurobi;solve;display x,a,b;" )

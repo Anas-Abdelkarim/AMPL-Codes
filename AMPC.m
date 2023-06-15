@@ -4,14 +4,46 @@ To use this class, it's important to ensure that the following steps are taken:
 1) Add this file to the MATLAB's search path so that it can be accessed by other programs.
 2) Ensure that the AMPL class exists in a folder located one level back from the AMPC folder. This will allow the child class to properly interface with the AMPL class and provide the desired matrix and vector support.
 %}
-classdef AMPC < AMPL
+classdef AMPC < AMPL  & POPA
+    properties
+        Editor_flag = 0; % 1 means do not initiate AMPL flag
+
+    end
 
 
     methods
 
-        function obj = AMPC(path)
+        function obj = AMPC(path,POPA_obj)
             obj@AMPL(path)
+
+
+            obj.AMPL_available = 1; % we are connected to AMPL
+
+            if exist('POPA_obj','var')
+                obj.OP = POPA_obj.OP;
+                obj.counter = POPA_obj.counter;
+
+                if false          % true for diagnosis mode
+                    for k = 1 : length(obj.OP)
+                        if k ~= 0                   % start with k~=6
+                            obj.eval(obj.OP(k))
+                            display(k)
+                        else
+                            display("syntax error at k = "+k)
+                        end
+                    end
+                else
+                    obj.eval(join(obj.OP))
+                end
+            end
+
+
+
+
+
         end
+
+
 
 
         function show(self, varargin)
@@ -214,164 +246,6 @@ classdef AMPC < AMPL
                 HandleException(e, 'AMPLAPI:AMPL:setData');
             end
         end
-        %% customized codes
-        function defineVar(self, dataName, indexRange, attribute)
-            % e.g. ampl.defineVar(dataName,indexRange,attribute)
-            % This function is used to define the variables  for the
-            % optimization problem in ampl language
-            % for more information, use the command:   help DenfineData
-            dataType = "var";
-            if ~exist('attribute','var')
-                attribute = "";
-            end
-            if ~exist("indexRange",'var')
-                indexRange = 1;
-            end
-            results  = defineData(dataType, dataName, indexRange, attribute);
-            printResultsFlag = true; % print on the screen
-            if printResultsFlag
-                fprintf(results)
-                fprintf(newline)
-
-            end
-            self.eval(results)
-        end
-
-        function defineParam(self,dataName,indexRange,attribute)
-            % e.g. ampl.defineParam(dataName,indexRange,attribute)
-            % This function is used to define the parameters for the
-            % optimization problem in ampl language
-            % for more information, use the command:   help DenfineData
-            dataType = "param";
-            if ~exist('attribute','var')
-                attribute = "";
-            end
-            if ~exist("indexRange",'var')
-                indexRange = 1;
-            end
-            results  = defineData(dataType, dataName, indexRange, attribute);
-            printResultsFlag = true; % print on the screen
-            if printResultsFlag
-                fprintf(results)
-                fprintf(newline)
-
-            end
-            self.eval(results)
-        end
-
-
-        function defineSet(self, setName, setMembers, attributes)
-            % e.g ampl.defineSet('k','1..4 by 2') % k = {1, 3}
-            % e.g ampl.defineSet('k', [1,5,6]) % k = {1, 5, 6};
-            % this function create a set with a give name and
-            % attributes : ordered
-            if ~exist('attributes','var')
-                attributes = "";
-            end
-            if isnumeric(setMembers)
-                setMembers = string(setMembers);
-                setMembers(1:end-1) = setMembers(1:end-1) +',';
-                setMembers = "{" + strjoin(setMembers)+ "}";
-            end
-            results = "redeclare set "+ setName + ":= " +...
-                setMembers+ " " + attributes + ";";
-            printResultsFlag = true; % print on the screen
-            if printResultsFlag
-                fprintf(results)
-                fprintf(newline)
-
-            end
-            self.eval(results)
-
-        end
-
-
-
-        function defineCons(self, consName, data, indexRange)
-            % e.g. ampl.defineCons(consName,data,indexRange)
-            % This function is used to define the constraints for the
-            % optimization problem in ampl language
-            % for more information, use the command:   help DenfineOp
-            description = "constr";
-            if ~exist("indexRange",'var')
-                indexRange = 1;
-            end
-            results = defineOP(description, consName, data, indexRange);
-            printResultsFlag = true; % print on the screen
-            if printResultsFlag
-                fprintf(results)
-                fprintf(newline)
-
-            end
-            self.eval(results)
-        end
-
-
-        function defineObj(self, description, objName, data, indexRange)
-            % e.g ampl.defineObj(description,objName,data,indexRange)
-            % This function is used to define the Objective function for the
-            % optimization problem in ampl language
-            % for more information, use the command:   help DenfineOp
-            if ~exist("indexRange",'var')
-                indexRange = 1;
-            end
-            results = defineOP(description, objName, data, indexRange);
-            printResultsFlag = true; % print on the screen
-            if printResultsFlag
-                fprintf(results)
-                fprintf(newline)
-
-            end
-            self.eval(results)
-        end
-
-        function assignParam(self, paramName, data, indexValue)
-            % e.g. ampl.assignParam(paramName,data)
-            % This function is used to assign the value of the parameter in
-            % the optimization problem
-            % for more information, use the command:   help assignParam
-            if ~exist("indexValue","var")
-                indexValue = 'default';
-            end
-
-            if strcmp(indexValue,"auto") % to exatract the sets of the paramerter for auto mode
-                sets= self.getParameter(paramName).getIndexingSets;
-                if isempty(sets)
-                    indexValue = 'default';
-                else
-                    indexValue = strings(1,length(sets));
-                    for i = 1 : length(sets)
-                        inIndex = strfind(sets{i},' in ');
-                        if isempty(inIndex)
-                            setName = sets{i};
-                        else
-                            setName = extractAfter(sets{i},' in ');
-                        end
-                        setValues =evalc(sprintf("self.display('%s')",setName));
-                        setValues = extractAfter(setValues,'=');
-                        setValues = strrep(setValues,';',' ');
-                        setValues = strrep(setValues,newline,' ');
-                        setValues = eval("[" + string(setValues) + "]");
-                        setValues = sort(reshape(setValues,1,[]));
-                        indexValue(i) = "[" + join(string(setValues)) + "]";
-                    end
-                end
-            end
-
-            results = assignParam(paramName, data, indexValue);
-
-            printResultsFlag = true; % print on the screen
-            if printResultsFlag
-                fprintf(results)
-                fprintf(newline)
-            end
-            self.eval(results)
-            % check if the assigned values within its constraints
-            check_message = evalc(sprintf("self.display('%s')",paramName));
-            if  contains( check_message , 'failed check' )
-                error(check_message)
-            end
-        end
 
         function [myValue, myIndex, dataStringRow] = getParamValue(self, paramName)
             % e.g. [myValue, myIndex,dataStringRow]= ampl.getParamValue(paramName)
@@ -558,6 +432,11 @@ classdef AMPC < AMPL
         %  exitcode = ;
         %  message = ;
 
+        function reset(self)
+            self.OP = "";
+            self.counter = 0;
+            self.eval('reset;')
+        end
 
 
     end

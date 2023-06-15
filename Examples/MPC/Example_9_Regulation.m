@@ -103,7 +103,7 @@ ampl.defineObj('min','cost_function', cost_function )
 
 %% define the constraints 
 
-dynamics  =  "x[i,k+1] =  " + multiply("A.T[i,1..2]","x[1..2,k]") + '+' +"B[i]*u[k]" ;% B[i] * u[k] because u is scalar;
+dynamics  = strcat("x[i,k+1] =", multiply("A.T[i,1..2]","x[1..2,k]"),'+' ,"B[i]*u[k]");% B[i] * u[k] because u is scalar;
 ampl.defineCons('dynamics', dynamics,[" i in 1..2", "k in K"] );
 ampl.eval('expand dynamics; ')
 

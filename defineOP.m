@@ -1,5 +1,5 @@
 function results = DefineOP(description,name,data,indexRange)
-% e.g.   def("max","cost", sum' 10000/(2*N)*sum { k in 0..N-1} x[3,k])
+% e.g.   def("max","cost", 'sum 10000/(2*N)*sum { k in 0..N-1} x[3,k]')
 % This function is used to define the objective function and the constraints
 % for the optimization problem in ampl language
 % description is either min to minimize the cost function
@@ -17,11 +17,12 @@ function results = DefineOP(description,name,data,indexRange)
 % e.g indexRange = [2,"i in 1..N", "A"];, where A is a predefined set
 % and the first dimension ranges for 1 to 2
 % and the second dimension ranges from 1 to N
+% mpt 
 
-
+% Note the index range is not for sum because sum takes it ranges directly
 % reference manual of the ampl,for more information, at link:
 % https://ampl.com/BOOK/CHAPTERS/24-refman.pdf
-%
+
 
 
 % arguments

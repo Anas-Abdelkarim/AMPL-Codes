@@ -10,17 +10,14 @@ clear all
 
 %%
 %%%%%%%%%%%%%%%%%%%%%%% Ampl Environment  %%%%%%%%%%%%%%%%%%%%%%%%%
-currentPath = which('Example_optimal_scheduling.m');
-if ispc
-    backslash = "\";
-else
-     backslash = "/";
-end 
-Index_amplapi = findstr(currentPath, backslash +'amplapi');
+currentPath = mfilename('fullpath') ;
+APIfolderName =  'amplapi';
+Index_amplapi = strfind(currentPath,APIfolderName);
 amplPathDir = currentPath(1:Index_amplapi-1);
 %% add path for the AMPL repository
-addpath(genpath(amplPathDir+ backslash+ "amplapi" +backslash+ "matlab"))
-run(amplPathDir + backslash+ "amplapi" +backslash+ "matlab" + backslash+ "setUp.m")
+matlab_api_path = fullfile(amplPathDir,APIfolderName,"matlab")
+addpath(genpath(matlab_api_path))
+run(fullfile(matlab_api_path,"setUp.m"))
 
 
 
