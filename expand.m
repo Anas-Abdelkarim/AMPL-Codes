@@ -1,15 +1,20 @@
-
-function [ stringArray, arraySize]  =  expand(varargin)
+function stringArray  =  expand(varargin)
 % this function converts the matrix to the array of strings
 % or expand a vector or matrix
 % the input is either string or matrix
 % example for the inputs as a string
 % 1- 'x.T[k , 0 . . 2  ]', .T for transpose , create vector of indexes 0 ,1,2 , k is constant no thing to do with the matrix indexes
-% 2- 'Q1[0..2,m,k, 2..5 ]', create a matrix of row indexes 0 ,1,2 and column indexes from 2 to 3  m, and k is constant no thing to do with the matrix indexes
-% 3- exapnd('x.T[%u..%u, k]',0,2)
-% 4- exapnd('u[1..%u, k]',1) here the output is scalar e.g. u 
-% 5- exapnd('u[1..%u, k]',1,true) here the output is vector e.g u[1];
-
+% 2- expand('Q1[0..2,m,k, 2..5 ]'), create a matrix of row indexes 0 ,1,2 and column indexes from 2 to 3  m, and k is constant no thing to do with the matrix indexes
+% 3- expand('x.T[%u..%u, k]',0,2)
+% 4- expand('u[1..%u, k]',1) here the output is scalar e.g. u
+% 5- expand('u[1..%u, k]',1,true) here the output is vector e.g u[1];
+% 6- expand('u[@, k]',[1,6]) here the output is vector e.g u[1] u[6];
+% 7- expand('u_@',[1,6]) here the output is vector e.g u_1 u_2;
+if isnumeric(varargin{1})
+    stringArray = varargin{1};
+    return
+end
+%% 1-check how to treat single element: as sclar or vector of size one
 if   islogical(varargin{end})
     vector_flag =   varargin{end};
     varargin =  varargin(1:end-1);
@@ -17,75 +22,137 @@ else
     vector_flag = false;
 end
 
-if  size(varargin) == 1
-    input = varargin{1};
-else     
-    input =   sprintf(varargin{:});
-end
-
-
+%% 2- substitutes the variables and the sets
+input = varargin{1};
 if ischar(input) || isstring(input) % here we need to construct the whole stringArray
-    input = char(input);
+    input =string(strrep(input, ' ', '')); % remove the white spaces
+    if length(input)> 1 ||(~contains(input,'{') && ~contains(input,'@') && ~contains(input,'..')&& ~contains(input,':'))
+        stringArray = input;
+        return
+    end
+    input =char(strrep(input, ' ', '')); % remove the white spaces
+    if  numel(varargin) > 1 % to treat the multi input
+        input = varargin{1};
+        varargin(1) = [];
+        input = strrep(input, '@', '{%s}');
+        input = strrep(input, '%u', '%s');
+        if    count(input, '%s') ~= size(varargin)
+            error(input+ ': number of input argument does not match number of the substitutions')
+        end
+        formattedElements  = cellfun(@formatElement, varargin, 'UniformOutput', false);
+        input =   sprintf(input,formattedElements{:});
 
-    input = input(~isspace(input)); % remove spaces
+    end
 
-    % Transpose flag
-    if contains(input,'.T')
+    %% 2-B replace , to ; inside {}
+    pattern = '\{([^{}]+|(?R))*\}';  % Regular expression pattern to match nested curly brackets
+    % Find matches of the pattern within the string
+    matches = regexp(input, pattern, 'match');
+
+    % Replace commas with semicolons for each match
+    for i = 1:numel(matches)
+        modified_match = strrep(matches{i}, ',', ';');
+        input = strrep(input, matches{i}, modified_match);
+    end
+
+
+    %% 3- check if we need to do traspose at the end
+    if contains(input,'.T') % note .T must be directly before [
         TransposeFlag= true;
         input = replaceBetween(input,'.','[', '[' ,'Boundaries','inclusive');
     else
         TransposeFlag = false;
     end
 
-    %% find the indexs of the sets
-    setsPositions = strfind(input,'..');
+
+
+    %% convert the sets
+    % find the indexs of the sets
     markPositions =  [ strfind(input,'[') strfind(input,',') strfind(input,']')];
 
-    % rows
-    rowIndexfirst = markPositions(markPositions< setsPositions(1));
-    rowIndexfirst = rowIndexfirst(end)+1;
+    if length( strfind(input,'[')) ~=  length(strfind(input,']'))
+        error(input  + " has a different number of opening and closing square brackets")
+    end
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    if contains(input,'[')    %% 4- treat bewteen [   ]
+        indexes_expand_flag = 1;
+    else
+        indexes_expand_flag = 0;
+    end
+    counter = 0;
 
-    rowIndexlast = markPositions(markPositions> setsPositions(1));
-    rowIndexlast = rowIndexlast(1)-1;
+    sets = {};
+    if indexes_expand_flag
+        loopLength = length(markPositions) - 1;
+    else
+        loopLength =numel(matches); % mataches of {}
+    end
 
-    rowSetString = input(rowIndexfirst:rowIndexlast);
-    rowSet = eval(replace(rowSetString,'..',':'));
+    for i = 1 : loopLength
+        if i >1  && indexes_expand_flag % update mark position
+            markPositions =  [ strfind(input,'[') strfind(input,',') strfind(input,']')];
+        end
+        % extract if there is a set
+        if  indexes_expand_flag
+            test_part = input(markPositions(i)+1:markPositions(i+1)-1);
+            % is there is set
+            test_part = strrep(test_part, '..', ':');
+        else
+            test_part = modified_match;
+        end
+        test_part = strrep(test_part, '{', '[');
+        test_part = strrep(test_part, '}', ']');
+        if  contains(test_part, ':') || contains(test_part, '[') ||contains(test_part, ']')
+            counter = counter +1;
+            if counter >2 && indexes_expand_flag
+                error('up to 2D matrix and be expanded')
+            end
+            if numel(matches) >1 && ~indexes_expand_flag
+                error('up to 1D vector and be expanded')
+            end
+            sets{counter} = eval(test_part);
+            if isempty(sets{counter})
+                error('the set is empty')
+            end
 
-    if isempty(rowSet)
-        input(rowIndexfirst:rowIndexlast)
-        error('set shoud be in the form x..y where x<=y integers')
+
+            % trace
+            trace = '###s';
+            if indexes_expand_flag
+                input = strcat(input(1:markPositions(i)),trace,...
+                    num2str(counter), input(markPositions(i+1):end));
+            else
+                input = strrep(input,modified_match, '###s1');
+            end
+        end
+    end
+
+
+    if isempty(sets)
+        warning(input + " is not expandable")
+        stringArray = input;
+        return;
 
     end
 
-    % columns
-    if ~isscalar(setsPositions)
-        columnsIndexfirst = markPositions(markPositions< setsPositions(2));
-        columnsIndexfirst = columnsIndexfirst(end)+1;
 
-        columnsIndexlast = markPositions(markPositions> setsPositions(2));
-        columnsIndexlast = columnsIndexlast(1)-1;
+    % rows
 
-        columnSetString = input(columnsIndexfirst:columnsIndexlast);
-        columnSet = eval(replace(columnSetString,'..',':'));
-
-        if isempty(columnSet)
-            input(columnsIndexfirst:columnsIndexlast)
-            error('set shoud be in the form x..y where x<=y integers')
-        end
-
+    rowSet = sets{1};
+    if counter > 1
+        columnSet =  sets{2};
     else
-        columnSetString = '......'; % random
         columnSet = 1 ;
     end
 
     % builind the string array of the matrix elements
     switch 2
         case 1 % with for loop
-
             arraySize = [  length(rowSet) , length(columnSet)];
-            if ~isscalar(setsPositions) % matrix
-                unitSring = replaceBetween(input,columnsIndexfirst,columnsIndexlast,'%d');
-                unitSring =  replaceBetween(unitSring,rowIndexfirst,rowIndexlast,'%d');
+            if counter > 1 % matrix
+
+                unitSring = strrep(input, strcat(trace,'1'), '%d');
+                unitSring = strrep(unitSring, strcat(trace,'2'), '%d');
 
                 stringArray = strings(arraySize );
                 for i = 1 : arraySize(1)
@@ -94,7 +161,7 @@ if ischar(input) || isstring(input) % here we need to construct the whole string
                     end
                 end
             else  % vector
-                unitSring =  replaceBetween(input,rowIndexfirst,rowIndexlast,'%d');
+                unitSring =  strrep(input, strcat(trace,'1'), '%d');
                 temp =     split(sprintf(unitSring+" ",rowSet));
                 stringArray = cellstr(temp(1:end-1)) ;
 
@@ -102,12 +169,12 @@ if ischar(input) || isstring(input) % here we need to construct the whole string
         case 2
 
             arraySize = [  length(rowSet) , length(columnSet)];
-            unitSring =  replaceBetween(input,rowIndexfirst,rowIndexlast,'%d');
+            unitSring =  strrep(input, strcat(trace,'1'), '%d');
             % first column  with all rows once
             first_column =     split(sprintf(unitSring+" ",rowSet));
             first_column =  first_column(1:end-1); % delete the empty string
 
-            temp = replace(first_column,columnSetString,'%d');
+            temp  =strrep(first_column, strcat(trace,'2'), '%d');
             temp = repmat(temp,[ 1 arraySize(2)]);
             temp = sprintf(join(join(temp)),repmat(columnSet,[1 length(rowSet)]));
             stringArray = split(temp);
@@ -116,7 +183,6 @@ if ischar(input) || isstring(input) % here we need to construct the whole string
     end
     if TransposeFlag
         stringArray = stringArray';
-        arraySize = flip(arraySize);
     end
 
     if isscalar(stringArray) && ~vector_flag
@@ -124,20 +190,25 @@ if ischar(input) || isstring(input) % here we need to construct the whole string
             stringArray =  replace(stringArray,'[1,',"[");
         elseif  contains(stringArray,',1]')
             stringArray =  replace(stringArray,',1]',"]");
-         elseif  contains(stringArray,',1,')
+        elseif  contains(stringArray,',1,')
             stringArray =  replace(stringArray,',1,',",");
-        else           
+        else
             stringArray =  replace(stringArray,{'[1]',',1,'},"");
         end
     end
-else
-    precision = 1000;
-    arraySize = size(input);
-    string =  mat2str(input, precision);
-    StringCell = split(string, {'[', ']',',',';',' '})';
-    StringCell = StringCell(strlength(StringCell) > 0); % discar the empty strings
-    stringArray =  convertCharsToStrings(StringCell(:));
-    stringArray =  reshape(stringArray,flip(arraySize))';
 
 end
+
+
+    function formattedElement = formatElement(element)
+        if isnumeric(element)
+            if  numel(element) > 1
+                formattedElement = sprintf('%s', strjoin(string(element), ';'));
+            else
+                formattedElement = sprintf('%d', element);
+            end
+        else
+            error("the inmupt argument is not "+ element)
+        end
+    end
 end

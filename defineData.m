@@ -10,6 +10,7 @@ function results = defineData(dataType,dataName,indexRange,attribute)
 % reference manual of the ampl,for more information, at link:
 % https://ampl.com/BOOK/CHAPTERS/24-refman.pdf
 % e.g. attribute = "integer", = "binary", "integer >= 0", " >=6"
+%      attribute = " >= -Infinity, <= Infinity"
 % indexRange =  1 or empty of scaler data
 % indexRange = x, where x>=1 for vector
 % indexRange = [x1,"x2..x3",...] for multi dimensional data

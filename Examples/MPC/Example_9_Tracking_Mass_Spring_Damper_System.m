@@ -24,12 +24,18 @@ clc
 clear all  
 
 %%%%%%%%%%%%%%%%%%%%%%% Ampl Environment  %%%%%%%%%%%%%%%%%%%%%%%%%
-currentPath = which('Example_9_Tracking_Mass_Spring_Damper_System.m');
-Index_amplapi = findstr(currentPath,'\amplapi');
-amplPathDir = currentPath(1:Index_amplapi);
+currentPath = mfilename('fullpath') ;
+APIfolderName =  'amplapi';
+Index_amplapi = strfind(currentPath,APIfolderName);
+amplPathDir = currentPath(1:Index_amplapi-1);
 %% add path for the AMPL repository
-addpath(genpath(amplPathDir+ "\amplapi\matlab"))
-run(amplPathDir + "\amplapi\matlab"+  "\setUp.m")
+matlab_api_path = fullfile(amplPathDir,APIfolderName,"matlab")
+addpath(genpath(matlab_api_path))
+run(fullfile(matlab_api_path,"setUp.m"))
+
+
+
+
 
 tic
 
@@ -70,8 +76,8 @@ x_ref = 0.5*[zeros(1,10) ones(1,20) zeros(1,N_sim-10-20); zeros(1,N_sim)];
 
 %%%%%%%%%%%%%%%%%%%%%%%% Preparing the OP in AMPL %%%%%%%%%%%%%%%%%%%%%%
 
-TC = runAMPL(amplPathDir); % OP of traget calculation
-MPC = runAMPL(amplPathDir); % OP for MPC
+TC = AMPC(amplPathDir); % OP of traget calculation
+MPC = AMPC(amplPathDir); % OP for MPC
 
 
 
@@ -92,22 +98,18 @@ TC.defineParam('u_ss_unc');
 
 %% Construct the cost function
 % Temp1 = (Cr*x_ss - r)   
-Temp1 = strcat(... 
-                  '(', ...
-                            multiply(Cr,'x_ss[1..'+string(nx)+']'), ...  % is equivalent to sprintf('x_ss[1..%u]',nx) or we could use expand('x_ss[1..%u]',nx)
-                            '-' , expand('r[1..%u]',nu),... 
-                            ')'...                                  % do not forget to close the parentheses
-                                                               ); 
+Temp1 = strcat('(',multiply(Cr,'x_ss[1..%u]',nx),'-', ...
+                         expand('r[1..%u]',nu) ,')' );% do not forget to close the parentheses
+                                                              
 % Temp2 = (u_ss - u_ss_unc)
-Temp2 = "(" + expand('u_ss[1..%u]',nu) + " - " +  ...
-              expand('u_ss_unc[1..%u]',nu) + ")"; % all are scaler
+Temp2 = strcat('(',expand('u_ss[1..%u]',nu), " - " ,  ...
+              expand('u_ss_unc[1..%u]',nu) + ")"); % all are scaler
 % cost_function1 = .5*(Temp1'*Qss*Temp1 + Temp2'*Rss*Temp2);
 cost_function1 = strcat(...
-                       ".5*(",...
-                               multiply(Temp1',Qss,Temp1),...
-                               '+' , multiply( Temp2',Rss, Temp2),...    % Note Temp2 must be string because I make transpose 
-                                                                   ")" ...
-                                                                    ); 
+                       ".5*(",multiply(Temp1',Qss,Temp1),...
+                         '+' , multiply( Temp2',Rss, Temp2), ")");     % Note Temp2 must be string because I make transpose 
+                                                                  
+                                                                    
 TC.defineObj('min','cost_function', cost_function1);
 
 %% the constraints 
@@ -152,13 +154,11 @@ MPC.assignParam('N',N );
 
 
 % cost_function: x_tilde(N)'*P*x_tilde(N) + sum {k = 0 to N-1 } (x_tilde(k)'*Q*x_tilde(k) + u_tilde(k)'*R*u_tilde(k)) 
-cost_function = strcat(...
-                           multiply('x_tilde.T[1..'+string(nx)+',N]',P,'x_tilde[1..'+string(nx)+',N]')      ,...
-                           '+', 'sum {k in 0..N-1 by 1}'                           , ...
-                           ' ('                                                    ,...
-                           multiply(expand('x_tilde.T[1..%u,k]',nx),Q,sprintf('x_tilde[1..%u,k]',nx))      ,...
-                           '+',multiply("u_tilde.T[1.."+string(nu)+",k]",R,"u_tilde[1.."+string(nu)+",k]")              ,... note         multiply("u_tilde.T[k]",R_,'u_tilde[k]') for scalar  is okay
-                                                                        ' )'       ); 
+cost_function = strcat( multiply('x_tilde.T[1..%u,N]',nx,P,'x_tilde[1..%u,N]',nx),'+',...
+                          'sum {k in 0..N-1 by 1}(',...                                                      ,...
+                           multiply('x_tilde.T[1..%u,k]',nx,Q,'x_tilde[1..%u,k]',nx),'+',...
+                           multiply("u_tilde.T[1..%u,k]",nu,R,"u_tilde[1..%u,k]",nu)  ,   ' )'  ); 
+                                                                          
 MPC.defineObj('min','cost_function', cost_function);
 
 %% the constraints 
@@ -169,6 +169,8 @@ MPC.defineCons('dynamics',dynamics,"k in 0..N-1")
 
 % the output constraints: x_min <=x_tilde+x_ss <= x_max
 Temp7 = "(" + expand('x_tilde[1..%u,k]',nx) + ' + ' + expand('x_ss[1..%u]',nx)+ ' )';
+Temp7 = strcat("(",expand('x_tilde[1..%u,k]',nx), ' + ', expand('x_ss[1..%u]',nx), ' )');
+
 output_constraints = expand(x_min) + '  <= ' + multiply(C,Temp7) + '<=' + expand(x_max)   ;
 MPC.defineCons('output_constraints',output_constraints," k in 1..N");   
 
@@ -207,6 +209,7 @@ TC.assignParam('u_ss_unc',u_ss_unc{i})
 TC.assignParam('r',r)
 
 % solve the OP
+TC.eval("option solver CPLEX;")
 TC.solve
 
 
@@ -233,6 +236,7 @@ MPC.assignParam('x_initial',x{i})
 
 MPC.assignParam("x_initial",x{i})
 % solve the OP
+MPC.eval("option solver CPLEX;")
 MPC.solve
 
 % extract  the decision variabels X_tilde and U_tilde and the cost 

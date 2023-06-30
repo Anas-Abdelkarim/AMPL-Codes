@@ -10,12 +10,15 @@ clear all
 
 %%
 %%%%%%%%%%%%%%%%%%%%%%% Ampl Environment  %%%%%%%%%%%%%%%%%%%%%%%%%
-currentPath = which('Example_optimal_scheduling.m');
-Index_amplapi = findstr(currentPath,'\amplapi');
-amplPathDir = currentPath(1:Index_amplapi);
+currentPath = mfilename('fullpath') ;
+APIfolderName =  'amplapi';
+Index_amplapi = strfind(currentPath,APIfolderName);
+amplPathDir = currentPath(1:Index_amplapi-1);
 %% add path for the AMPL repository
-addpath(genpath(amplPathDir+ "\amplapi\matlab"))
-run(amplPathDir + "\amplapi\matlab"+  "\setUp.m")
+matlab_api_path = fullfile(amplPathDir,APIfolderName,"matlab")
+addpath(genpath(matlab_api_path))
+run(fullfile(matlab_api_path,"setUp.m"))
+
 
 
 
@@ -23,10 +26,11 @@ run(amplPathDir + "\amplapi\matlab"+  "\setUp.m")
 
 %% Method 1
 %read from .mod and .dat files
-% ampl1 = runAMPL(amplPathDir);
+% ampl1 = AMPC(amplPathDir);
 % ampl1.read([strcat(currentPath(1:end-29),'\Model.mod')]);
 % ampl1.readData([strcat(currentPath(1:end-29),'\DATA.dat')]);
 % ampl1.eval('option show_stats 1;')
+% ampl1.eval('option solver CPLEX;')
 % ampl1.solve
 % costValue = ampl1.getValue("cost_function")
 % aClass = ampl1.getVariable("a")
@@ -41,7 +45,7 @@ run(amplPathDir + "\amplapi\matlab"+  "\setUp.m")
 %% Method 2
 % model mode
 % define the parameters
-ampl = runAMPL(amplPathDir);
+ampl = AMPC(amplPathDir);
 ampl.defineParam("N",1,"integer") % definde N equivalent to ampl.eval('model; param N integer;)
 ampl.defineParam("Ts n_full_maintenance n_partial_maintenance") % scalar and no attributes
 ampl.defineParam("Q Ma  Mb ",[6,6]) % matrices with size of 6*6 (index ranges from 1..6, 1..6), no attributes
@@ -180,6 +184,7 @@ ampl.assignParam("Q",Q)
 
 %% solve the optimization problem
 ampl.eval('option show_stats 1;')
+ampl.eval('option solver CPLEX;')
 ampl.solve
 
 %% Harvest the results
