@@ -220,11 +220,19 @@ classdef   POPA   < handle% prepare the OP for AMPL
             results = self.update(results);
         end
 
+        function  results = runAMPL(self)
+            path = fileparts(mfilename('fullpath')); % the dirctory of local_config
+            path_part = strsplit(path, 'amplapi') ;
+            results =  AMPC(path_part{1}(1:end-1),self);
+
+        end
+
+
 
         %%%%%%%%%%% MATHMATICAL OPERATIONS %%%%%%%%%%%%%
         function  results = multiply(self,varargin)
-            % e.g  results = ampl.multiply("x.T[1..2, k]", 'Q1[1..2, 1..2 ]', "x[ 1..2, k]")
-            % e.g  results = ampl.multiply("x.T[%u..%u, k]",1,2, 'Q1[1..%u, %u..2 ]',2,1, "x[ 1..2, k]")
+            % e.g  results = POPA.multiply("x.T[1..2, k]", 'Q1[1..2, 1..2 ]', "x[ 1..2, k]")
+            % e.g  results = POPA.multiply("x.T[%u..%u, k]",1,2, 'Q1[1..%u, %u..2 ]',2,1, "x[ 1..2, k]")
 
             % this function multiplies matrices of string array for ampl program
             % example for the inputs arguments
@@ -233,14 +241,14 @@ classdef   POPA   < handle% prepare the OP for AMPL
             % 2- 'Q1[0..2,m,k, 2..5 ]'  create matrix of row indexes 0 ,1,2 and column indexes from 2 to 3  m, and k is constant no thing to do with the matrix indexes
             % m where m is a numeric array
 
-            [stringArray, arraySize, numInputs] = self.premathop(varargin{:})
+            inputs = self.premathop(varargin{:});
 
-
+            numInputs = numel(inputs);
             for k = 1 : numInputs - 1
                 if k == 1
-                    [results resutlsSize] = multiply(stringArray{k},stringArray{k+1},arraySize{k},arraySize{k+1});
+                    results = multiply2Arrays(inputs{k},inputs{k+1});
                 else
-                    [results resutlsSize] = multiply(results,stringArray{k+1},resutlsSize,arraySize{k+1});
+                    results = multiply2Arrays(results,inputs{k+1});
                 end
             end
 
@@ -261,14 +269,15 @@ classdef   POPA   < handle% prepare the OP for AMPL
             % 2- 'Q1[0..2,m,k, 2..5 ]'  create matrix of row indexes 0 ,1,2 and column indexes from 2 to 3  m, and k is constant no thing to do with the matrix indexes
             % m where m is a numeric array
 
-            [stringArray, arraySize, numInputs] = self.premathop(varargin{:})
-
             mathOperator = '+';
+
+            inputs = self.premathop(varargin{:});
+            numInputs = numel(inputs);
             for k = 1 : numInputs - 1
                 if k == 1
-                    [results resutlsSize] = self.ElementWiseOperation(mathOperator, stringArray{k},stringArray{k+1},arraySize{k},arraySize{k+1});
+                    results= self.ElementWiseOperation(mathOperator, inputs{k},inputs{k+1});
                 else
-                    [results resutlsSize] = self.ElementWiseOperation(mathOperator,results,stringArray{k+1},resutlsSize,arraySize{k+1});
+                    results = self.ElementWiseOperation(mathOperator,results,inputs{k+1});
                 end
             end
 
@@ -285,17 +294,18 @@ classdef   POPA   < handle% prepare the OP for AMPL
             % 1- 'x.T[k , 0 . . 2  ]', .T for transpose , create vector of indexes 0 ,1,2 , k is constant no thing to do with the matrix indexes
             % 2- 'Q1[0..2,m,k, 2..5 ]'  create matrix of row indexes 0 ,1,2 and column indexes from 2 to 3  m, and k is constant no thing to do with the matrix indexes
             % m where m is a numeric array
-
-            [stringArray, arraySize, numInputs] = self.premathop(varargin{:})
-
             mathOperator = '-';
+
+            inputs = self.premathop(varargin{:});
+            numInputs = numel(inputs);
             for k = 1 : numInputs - 1
                 if k == 1
-                    [results resutlsSize] = self.ElementWiseOperation(mathOperator, stringArray{k},stringArray{k+1},arraySize{k},arraySize{k+1});
+                    results= self.ElementWiseOperation(mathOperator, inputs{k},inputs{k+1});
                 else
-                    [results resutlsSize] = self.ElementWiseOperation(mathOperator,results,stringArray{k+1},resutlsSize,arraySize{k+1});
+                    results = self.ElementWiseOperation(mathOperator,results,inputs{k+1});
                 end
             end
+
 
         end
 
@@ -311,17 +321,18 @@ classdef   POPA   < handle% prepare the OP for AMPL
             % 1- 'x.T[k , 0 . . 2  ]', .T for transpose , create vector of indexes 0 ,1,2 , k is constant no thing to do with the matrix indexes
             % 2- 'Q1[0..2,m,k, 2..5 ]'  create matrix of row indexes 0 ,1,2 and column indexes from 2 to 3  m, and k is constant no thing to do with the matrix indexes
             % m where m is a numeric array
-
-            [stringArray, arraySize, numInputs] = self.premathop(varargin{:})
-
             mathOperator = '/';
+
+            inputs = self.premathop(varargin{:});
+            numInputs = numel(inputs);
             for k = 1 : numInputs - 1
                 if k == 1
-                    [results resutlsSize] = self.ElementWiseOperation(mathOperator, stringArray{k},stringArray{k+1},arraySize{k},arraySize{k+1});
+                    results= self.ElementWiseOperation(mathOperator, inputs{k},inputs{k+1});
                 else
-                    [results resutlsSize] = self.ElementWiseOperation(mathOperator,results,stringArray{k+1},resutlsSize,arraySize{k+1});
+                    results = self.ElementWiseOperation(mathOperator,results,inputs{k+1});
                 end
             end
+
 
         end
 
@@ -336,86 +347,125 @@ classdef   POPA   < handle% prepare the OP for AMPL
             % 1- 'x.T[k , 0 . . 2  ]', .T for transpose , create vector of indexes 0 ,1,2 , k is constant no thing to do with the matrix indexes
             % 2- 'Q1[0..2,m,k, 2..5 ]'  create matrix of row indexes 0 ,1,2 and column indexes from 2 to 3  m, and k is constant no thing to do with the matrix indexes
             % m where m is a numeric array
-
-            [stringArray, arraySize, numInputs] = self.premathop(varargin{:})
-
             mathOperator = '*';
+
+
+            inputs = self.premathop(varargin{:});
+            numInputs = numel(inputs);
             for k = 1 : numInputs - 1
                 if k == 1
-                    [results resutlsSize] = self.ElementWiseOperation(mathOperator, stringArray{k},stringArray{k+1},arraySize{k},arraySize{k+1});
+                    results= self.ElementWiseOperation(mathOperator, inputs{k},inputs{k+1});
                 else
-                    [results resutlsSize] = self.ElementWiseOperation(mathOperator,results,stringArray{k+1},resutlsSize,arraySize{k+1});
+                    results = self.ElementWiseOperation(mathOperator,results,inputs{k+1});
                 end
             end
+
 
         end
 
 
-        function [stringArray,arraySize, numInputs] = premathop(self, varargin) %preprocessing the input before mathematical operations
+        function varargin = premathop(self,varargin) %preprocessing the input before mathematical operations
             % e.g  results = premathop("x.T[1..2, k]", 'Q1[1..2, 1..2 ]', "x[ 1..2, k]")
             % e.g  results = premathop("x.T[%u..%u, k]",1,2, 'Q1[1..%u, %u..2 ]',2,1, "x[ 1..2, k]")
+            % e.g  results = premathop('x[%u,@]',1, [2, 3], 'Q1[1..%u, %u..2 ]',2,1, "x[ 1..2, k]")
 
             % this function prepare the input of the function operator
             % example for the inputs arguments
             % 1- 'R' for scalar %  do not use 'R[1..1]' if R has no indexes in AMPL
             % 1- 'x.T[k , 0 . . 2  ]', .T for transpose , create vector of indexes 0 ,1,2 , k is constant no thing to do with the matrix indexes
             % 2- 'Q1[0..2,m,k, 2..5 ]'  create matrix of row indexes 0 ,1,2 and column indexes from 2 to 3  m, and k is constant no thing to do with the matrix indexes
+
             % m where m is a numeric array
 
 
             numInputs =  length(varargin);
-            % substitute the numbers based on (%) sign
-            for i = 1 : numInputs
-                try
-                    while  contains( varargin{i} , '%u')
-                        varargin{i} =char(varargin{i});
-                        indexes = findstr(varargin{i},'%u');
-                        varargin{i} =strcat(varargin{i}(1:indexes(1)-1),num2str(varargin{i+1}),varargin{i}(indexes(1)+2:end)) ;
-                        varargin(i+1) =[];
-                        numInputs = numInputs - 1;
+            expand_flag = ones(numInputs,1);
+
+            %% substitute the numbers based on (%) sign and @
+            i = 1;
+            while  numInputs   > 0
+                numSubstitutions = 0;
+                if  (isstring( varargin{i}) && isscalar( varargin{i})) || (ischar( varargin{i}) && isscalar( varargin{i}+""))
+                    varargin{i} =  char(strrep(varargin{i}, ' ', '')); % remove the
+                    input =char(varargin{i});
+                    numSubstitutions =   count( input, '@') +  count( input, '%u');
+                    if numSubstitutions>0
+                        input = strrep(input, '@', '{%s}');
+                        input = strrep(input, '%u', '%s');
+                        substitutions = varargin(i +1 : i + numSubstitutions);
+                        varargin(i +1 : i + numSubstitutions) = [];
+                        formattedElements  = cellfun(@formatElement,substitutions, 'UniformOutput', false);
+                        varargin{i} =   sprintf(input,formattedElements{:});
 
                     end
+                else
+                    expand_flag(i) = false;
                 end
+                numInputs = numInputs - 1 -numSubstitutions;
+                i = i + 1;
             end
 
+            %% expand the inputs if possible
 
-            for k = 1 : numInputs
+            for k = 1 : numel(varargin)
+                if expand_flag == false
+                    continue
+                end
+
+                error_flag = 0;
                 try  % if it is alread expaned
-                    [stringArray{k}, arraySize{k}]  =  expand(varargin{k});
+                    temp = expand(varargin{k});
                 catch
-                    stringArray{k} = string(varargin{k});
-                    arraySize{k} =size(stringArray{k} );
+                    error_flag = 1;
                 end
+
+                if error_flag == false % if
+                    varargin{k} = temp;
+                end
+
 
             end
 
-
+            function formattedElement = formatElement(element)
+                % this function replace numeric to string
+                if isnumeric(element)
+                    if  numel(element) > 1
+                        formattedElement = sprintf('%s', strjoin(string(element), ';'));
+                    else
+                        formattedElement = sprintf('%d', element);
+                    end
+                else
+                    error("the input argument is not numeric, see "+ element)
+                end
+            end
 
         end
 
 
-        function [results, arraySizeResult] =ElementWiseOperation(self,mathOperator,stringArray1,stringArray2,arraySize1,arraySize2)
+        function results =ElementWiseOperation(self,mathOperator,array1,array2)
             % the operations can be +  - * /
             % this function operates  matrices of string array for ampl program
             % stringArrayIn1(2) first and second stringArrays
             % arraySizeIn1(2) the size of the   stringArrayIn1(2)
 
-            % check if we sum with scalar
-            if max(arraySize1) == 1 ||  max(arraySize2) == 1
-                results =  strcat(    '(', '(' , stringArray1, ')', mathOperator,'(', stringArray2,')',')'    );
-                arraySizeResult = max(arraySize1,arraySize2);
-            else
-
-                % check the output size
-                if  arraySize1(1)~= arraySize2(1) || arraySize1(2)~= arraySize2(2)
-                    error( ['Incorrect dimensions for matrix multiplication. Check that the number of columns in the first matrix matches the number of rows in the second' ...
-                        ' matrix.'])
+            if isnumeric(array1) && isnumeric(array2) % here we use matlab multiplication
+                if strcmp(mathOperator,'*') ||strcmp(mathOperator,'/')
+                    mathOperator = "." + mathOperator;
                 end
+                results = eval("array1"+mathOperator+"array2");
+                return 
+            else
+                array1 = mat2string(array1); % convert the array to string array
+                array2 = mat2string(array2); % convert the array to string array
+                array1size = size(array1);
+                array2size = size(array2);
+                    if  array1size~= array2size(1) % double check sizes
+                        error('Incorrect dimensions. Both should have the same dimensions')
+                    end
 
-                % the size of the resulted array
-                arraySizeResult = arraySize1;
-                results = "(" +"("+ stringArray1+")" + mathOperator +"(" + stringArray2+"))";
+                results =  "(" +  array1 + ')'+ mathOperator +  '(' + array2 + ')';
 
+               
             end
 
 
@@ -442,8 +492,8 @@ classdef   POPA   < handle% prepare the OP for AMPL
 
         end
         function reset(self)
-           self.OP = "";
-           self.counter = 0;        
+            self.OP = "";
+            self.counter = 0;
         end
 
 

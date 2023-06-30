@@ -26,12 +26,15 @@ classdef AMPC < AMPL  & POPA
                 if false          % true for diagnosis mode
                     for k = 1 : length(obj.OP)
                         if k ~= 0                   % start with k~=6
-                            obj.eval(obj.OP(k))
-                            display(k)
-                        else
-                            display("syntax error at k = "+k)
+                            try
+                                obj.eval(obj.OP(k))                             
+                            catch
+                                display(obj.OP(k))
+                                display("syntax error at k = "+k)
+                            end
                         end
                     end
+
                 else
                     obj.eval(join(obj.OP))
                 end
