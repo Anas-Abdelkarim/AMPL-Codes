@@ -30,13 +30,11 @@ if ischar(input) || isstring(input) % here we need to construct the whole string
         stringArray = input;
         return
     end
-    input =char(strrep(input, ' ', '')); % remove the white spaces
     if  numel(varargin) > 1 % to treat the multi input
-        input = varargin{1};
         varargin(1) = [];
         input = strrep(input, '@', '{%s}');
         input = strrep(input, '%u', '%s');
-        if    count(input, '%s') ~= size(varargin)
+        if    count(input, '%s') ~= numel(varargin)
             error(input+ ': number of input argument does not match number of the substitutions')
         end
         formattedElements  = cellfun(@formatElement, varargin, 'UniformOutput', false);
@@ -92,6 +90,7 @@ if ischar(input) || isstring(input) % here we need to construct the whole string
         if i >1  && indexes_expand_flag % update mark position
             markPositions =  [ strfind(input,'[') strfind(input,',') strfind(input,']')];
         end
+        input = char(input);
         % extract if there is a set
         if  indexes_expand_flag
             test_part = input(markPositions(i)+1:markPositions(i+1)-1);

@@ -13,68 +13,43 @@ classdef AMPC < AMPL  & POPA
 
     methods
 
-        function obj = AMPC(path,POPA_obj)
+        function obj = AMPC(POPA_obj)
+            path = fileparts(mfilename('fullpath'));
+            path_part = strsplit(path, 'amplapi') ;
+            path = path_part{1}(1:end-1); 
+
             obj@AMPL(path)
-
-
             obj.AMPL_available = 1; % we are connected to AMPL
 
             if exist('POPA_obj','var')
-                obj.OP = POPA_obj.OP;
-                obj.counter = POPA_obj.counter;
+                obj.OP_log = POPA_obj.OP_log;
+                obj.OP_log_counter = POPA_obj.OP_log_counter;
 
                 if false          % true for diagnosis mode
-                    for k = 1 : length(obj.OP)
+                    for k = 1 : length(obj.OP_log)
                         if k ~= 0                   % start with k~=6
                             try
-                                obj.eval(obj.OP(k))                             
+                                obj.eval(obj.OP_log(k))                             
                             catch
-                                display(obj.OP(k))
+                                display(obj.OP_log(k))
                                 display("syntax error at k = "+k)
                             end
                         end
                     end
 
                 else
-                    obj.eval(join(obj.OP))
+                    obj.eval(join(obj.OP_log))
                 end
             end
 
-
-
-
-
         end
 
 
 
 
-        function show(self, varargin)
-            if size(varargin) > 0
-                c = toJava('com.ampl.Entity', varargin{:});
-                self.impl.show(c)
-            else
-                error('Not enough arguments')
-            end
-        end
+  
 
-        function expand(self, varargin)
-            if size(varargin) > 0
-                c = toJava('com.ampl.Entity',varargin{:});
-                self.impl.expand(c)
-            else
-                error('Not enough arguments')
-            end
-        end
-
-        function display(self, varargin)
-            if ((size(varargin) > 0) & (~strcmp(varargin{1} ,'ampl')))
-                c = toJava('java.lang.Object', varargin{:});
-                self.impl.display(c)
-            else
-                self.impl.getOption('version')
-            end
-        end
+ 
 
 
 
@@ -436,8 +411,8 @@ classdef AMPC < AMPL  & POPA
         %  message = ;
 
         function reset(self)
-            self.OP = "";
-            self.counter = 0;
+            self.OP_log = "";
+            self.OP_log_counter = 0;
             self.eval('reset;')
         end
 
