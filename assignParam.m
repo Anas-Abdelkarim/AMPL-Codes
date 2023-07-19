@@ -1,4 +1,4 @@
-function results = paramSet(paramName,data,indexValue)
+function results = assignParam(paramName,data,indexValue)
 % This function is used to feed the parameters values  for the
 % optimization problem in ampl language
 % variable_name should match with the name defined in the model part
@@ -7,14 +7,14 @@ function results = paramSet(paramName,data,indexValue)
 % vector flag is optional to force defining a scalar as a  vector by
 % keeping an index for the  parameter
 % e.g. variable_name = ['param1 param2']; data = [1,2] 
-% ---> results = paramSet(variable_name,data)
-% e.g,  results = paramSet('Ts',5)
-% e.g,  results = paramSet('A',[1 2 ; 5 6])
-% e.g, results = paramSet('A[2,2]',5) to change only one element in the vector 
-% e.g, results = paramSet('B',2,'1') this to indicate the B has index 1; 
-% e.g, results = paramSet('B',2 9,"[0 2 3]") this to indicate the B has indexes 0 2 3 ; 
-% e.g, results = paramSet('B',data,["0:9","2:7"]) this to indicate the B matrix has row indexes 0:9 and column index 2:7 ; 
-% e.g, results = paramSet('B',2,'auto') to evaluate the sets from ampl. 
+% ---> results = assignParam(variable_name,data)
+% e.g,  results = assignParam('Ts',5)
+% e.g,  results = assignParam('A',[1 2 ; 5 6])
+% e.g, results = assignParam('A[2,2]',5) to change only one element in the vector 
+% e.g, results = assignParam('B',2,'1') this to indicate the B has index 1; 
+% e.g, results = assignParam('B',2 9,"[0 2 3]") this to indicate the B has indexes 0 2 3 ; 
+% e.g, results = assignParam('B',data,["0:9","2:7"]) this to indicate the B matrix has row indexes 0:9 and column index 2:7 ; 
+% e.g, results = assignParam('B',2,'auto') to evaluate the sets from ampl. 
 
 
 string(indexValue);

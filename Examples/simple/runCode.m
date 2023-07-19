@@ -24,7 +24,8 @@ run(amplPathDir + backslash+ "amplapi" +backslash+ "matlab" + backslash+ "setUp.
 
 %% Method 1
 % run AMPL
-ampl = AMPC(amplPathDir); 
+ampl = POPA;
+ampl = ampl.runAMPL;
 % model
 ampl.eval('model; param a; var x;')
 ampl.eval('minimize cost: x**2;')
@@ -49,7 +50,8 @@ ampl.close
 
 %% Method 2
 % run AMPL
-ampl = AMPC(amplPathDir); 
+ampl = POPA;
+ampl = ampl.runAMPL;
 % read the model
 ampl.read(["Model.mod"])
 % read the data 
@@ -66,7 +68,8 @@ a = ampl.getParamValue('a')
 ampl.close
 
 clc
-ampl = AMPC(amplPathDir); 
+ampl = POPA;
+ampl = ampl.runAMPL;
 ampl.eval("  reset; # clear previous definitions       model; # declare the model " +...
       " var x;      param a;      param b;      minimize cost: (x**2-a)^2;      s.t. constraints: x>=b;" )
 ampl.eval("data; param b := -1;data; param a :=5;  option solver gurobi;solve;display x,a,b;" )

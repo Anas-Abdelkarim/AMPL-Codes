@@ -25,7 +25,7 @@ classdef AMPC < AMPL  & POPA
                 obj.OP_log = POPA_obj.OP_log;
                 obj.OP_log_counter = POPA_obj.OP_log_counter;
 
-                if false          % true for diagnosis mode
+                if true          % true for diagnosis mode
                     for k = 1 : length(obj.OP_log)
                         if k ~= 0                   % start with k~=6
                             try
@@ -253,7 +253,7 @@ classdef AMPC < AMPL  & POPA
 
         end
 
-        function [myValue, myIndex,dataStringRow] = getVarValue(self, varName)
+        function [myValue, myIndex, dataStringRow] = getVarValue(self, varName)
             % e.g. [myValue, myIndex,dataStringRow]= ampl.getVarValue(varName)
             data = self.getVariable(varName);
             dataExtractFunc
@@ -270,7 +270,7 @@ classdef AMPC < AMPL  & POPA
             expandCost =  objClass.get ;
         end
 
-        function [results names]= expandSets(self)
+        function [results, names]= expandSets(self)
             % e.g. [results names]= ampl.expandSets()
             Temp = self.getSets;
             names = Temp.toString ;
@@ -291,7 +291,7 @@ classdef AMPC < AMPL  & POPA
             results = join(results);
         end
 
-        function [results names]= expandObjs(self)
+        function [results, names]= expandObjs(self)
             % e.g. [results names]= ampl.expandObjs()
             Temp = self.getObjectives;
             names = Temp.toString;
@@ -311,7 +311,7 @@ classdef AMPC < AMPL  & POPA
         end
 
 
-        function [results names]= expandCons(self)
+        function [results, names]= expandCons(self)
             % e.g. [results names]= ampl.expandCons()
             Temp = self.getConstraints;
             names = Temp.toString ;
@@ -332,7 +332,7 @@ classdef AMPC < AMPL  & POPA
         end
 
 
-        function [results names]= expandParams(self)
+        function [results, names]= expandParams(self)
             % e.g. [results names]= ampl.expandParams()
             Temp = self.getParameters;
             names = Temp.toString;
@@ -346,7 +346,7 @@ classdef AMPC < AMPL  & POPA
                     try
                         Temp2 = self.getParameter(names{c}).toString;
                         [~,~,Temp3] = self.getParamValue(names{c});
-                    catch ME
+                    catch ME   % here if the the code gives error that no values in the parameter 
                         Temp3 =  splitlines(getReport(ME));
                         Temp3 = Temp3{2} + string(newline);
                     end
@@ -359,7 +359,7 @@ classdef AMPC < AMPL  & POPA
 
 
 
-        function [results names]= expandVars(self)
+        function [results, names]= expandVars(self)
             % e.g. [results names]= ampl.expandVars()
             Temp = self.getVariables;
             names = Temp.toString ;
@@ -387,8 +387,8 @@ classdef AMPC < AMPL  & POPA
         function results = expandAll(self,filename)
             % e.g, results = expandAll(self,filename)
             results = [self.expandSets;self.expandParams;
-                self.expandObjs;self.expandCons;
-                self.expandVars];
+                self.expandObjs;self.expandVars;
+                self.expandCons];
             printResultsFlag = false; % print on the screen
             if printResultsFlag
                 disp(results)

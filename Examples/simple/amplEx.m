@@ -27,7 +27,8 @@ findOptimal(amplPathDir,5,-1)
 
 
 function result = findOptimal(amplPathDir, a,b)
-   ampl = AMPC(amplPathDir);
+   ampl = POPA;
+   ampl = ampl.runAMPL;
     OP = join([
         " reset;"...
         " model; "...

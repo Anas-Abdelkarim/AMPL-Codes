@@ -4,9 +4,8 @@ classdef   POPA   < handle      % prepare the OP for AMPL
         AMPL_available = 0;
         create_symbolic_flag =0;
         printResultsFlag = 0; % if want to print on the screen
-        left_bracket_symbol = '_LL_';
-        right_bracket_symbol = '_JJ';
-        comma_sympol = '_I_';
+        symbAMPL = [];  % symbolic in AMPL
+        symbMATLAB = []; % symbolic in MATLAB
         logging_flag = 1;
         log  = [];   % data log
         OP_log_counter = 0;
@@ -20,11 +19,37 @@ classdef   POPA   < handle      % prepare the OP for AMPL
 
     methods
 
+        function obj = POPA(obj)
+
+            obj.symbAMPL.left_bracket = '[';   % symbols
+            obj.symbMATLAB.left_bracket = '_LL_'; % symbols replacements
+
+            obj.symbAMPL.right_bracket = ']';
+            obj.symbMATLAB.right_bracket = '_JJ';
+
+            obj.symbAMPL.comma = ',';
+            obj.symbMATLAB.comma = '_I_';
+
+            obj.symbAMPL.sum = '\+';
+            obj.symbMATLAB.sum = '_pLUS_';
+
+            obj.symbAMPL.power = '**';
+            obj.symbMATLAB.power = '^';
+
+            obj.symbAMPL.equality = '=';
+            obj.symbMATLAB.equality = '==';
+
+
+
+
+
+        end
+
 
 
         %% at management level
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        function self = update(self,command)
+        function update(self,command)
             % update the diary
             self.OP_log_counter = self.OP_log_counter + 1;
             self.OP_log(self.OP_log_counter) = command;
@@ -74,28 +99,32 @@ classdef   POPA   < handle      % prepare the OP for AMPL
 
         %%
         %%%%%%%%%%%%%%%%%%%%%%%%%% Offline %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        % define functions
-        function results = defineVar(self, dataName, indexRange, attribute,create_symbolic_flag)
-            % e.g. ampl.defineVar(dataName,indexRange,attribute)
+        function results = definedata(self,dataType, dataName, indexRange, attribute,create_symbolic_flag,assign_value,data)
+            % e.g. self.definedata(dataName, indexRange, attribute,create_symbolic_flag,assign_value,data)
             % This function is used to define the variables  for the
             % optimization problem in ampl language
             % for more information, use the command:   help DenfineData
             % create_symbolic_flag: 1 to make symbolic variable
+            % assign_value = 'data', if we want to define and assign the data
+            % data: the numeric values of the data
 
-          
-            if nargin < 3 || isempty(indexRange)
+
+            min_narg = 4;
+            if nargin < min_narg || isempty(indexRange)
                 indexRange = 1;
             end
 
-            if nargin < 4 || isempty(attribute)
+            if nargin < min_narg + 1 || isempty(attribute)
                 attribute = "";
             end
 
-            if nargin < 5 || isempty(create_symbolic_flag)
+            if nargin < min_narg + 2 || isempty(create_symbolic_flag)
                 create_symbolic_flag = 0;
             end
-           
-            dataType = "var";
+
+            if nargin < min_narg + 3 || isempty(assign_value)
+                assign_value = "";
+            end
 
 
             self.checkname(dataName)
@@ -120,7 +149,7 @@ classdef   POPA   < handle      % prepare the OP for AMPL
 
 
             % save the results in OP
-            results = self.update(results);
+           self.update(results);
 
             if (self.create_symbolic_flag || create_symbolic_flag) && numel(indexRange) <= 2  % create symbolic
                 temp = self.sym(dataName,indexRange);
@@ -129,65 +158,85 @@ classdef   POPA   < handle      % prepare the OP for AMPL
                 end
             end
 
+            if   strcmp(assign_value,"data")
+                self.assignParam(dataName, data);
+            elseif ~strcmp(assign_value,"")
+                error( assign_value + " (assign_value) input must be equual to   'data', "" or [])")
+            end
+
+
 
         end
 
-        function results = defineParam(self,dataName,indexRange,attribute,create_symbolic_flag)
-            % e.g. ampl.defineParam(dataName,indexRange,attribute)
-            % This function is used to define the parameters for the
+
+        function results = defineVar(self, dataName, indexRange, attribute,create_symbolic_flag,assign_value,data)
+            % e.g. self.defineVar(dataName, indexRange, attribute,create_symbolic_flag,assign_value,data)
+            % This function is used to define the variables  for the
             % optimization problem in ampl language
             % for more information, use the command:   help DenfineData
             % create_symbolic_flag: 1 to make symbolic variable
-            dataType = "param";
-  
-            if nargin < 3 || isempty(indexRange)
-                indexRange = 1;
-            end
-
-            if nargin < 4 || isempty(attribute)
-                attribute = "";
-            end
-
-            if nargin < 5 || isempty(create_symbolic_flag)
-                create_symbolic_flag = 0;
-            end
-           
-        
-
-            if ~exist("create_symbolic_flag",'var')
-                create_symbolic_flag = 0;
-            end
+            % assign_value = 'data', if we want to define and assign the data
+            % data: the numeric values of the data
 
             self.checkname(dataName)
-            results  = defineData(dataType, dataName, indexRange, attribute);
+            max_narg = 6;
+            inputs = cell(max_narg-nargin,1);
 
 
-            if self.AMPL_available
-                self.eval(results)
+            dataType = "var";
+
+            switch nargin
+                case 2
+                    results = self.definedata(dataType, dataName, inputs{:});
+                case 3
+                    results = self.definedata(dataType, dataName, indexRange, inputs{:});
+                case 4
+                    results = self.definedata(dataType, dataName, indexRange, attribute,inputs{:});
+                case 5
+                    results = self.definedata(dataType, dataName, indexRange, attribute,create_symbolic_flag,inputs{:});
+                case 6
+                    results = self.definedata(dataType, dataName, indexRange, attribute,create_symbolic_flag,assign_value,inputs{:});
+                case 7
+                    results = self.definedata(dataType, dataName, indexRange, attribute,create_symbolic_flag,assign_value,data);
             end
 
-            if self.logging_flag
-             self.addLog(dataName,indexRange);
+
+        end
+
+
+        function results = defineParam(self, dataName, indexRange, attribute,create_symbolic_flag,assign_value,data)
+            % e.g. self.defineParam(dataName, indexRange, attribute,create_symbolic_flag,assign_value,data)
+            % This function is used to define the variables  for the
+            % optimization problem in ampl language
+            % for more information, use the command:   help DenfineData
+            % create_symbolic_flag: 1 to make symbolic variable
+            % assign_value = 'data', if we want to define and assign the data
+            % data: the numeric values of the data
+
+            self.checkname(dataName)
+            max_narg = 6;
+            inputs = cell(max_narg-nargin,1);
+
+            dataType = "param";
+            switch nargin
+                case 2
+                    results = self.definedata(dataType, dataName, inputs{:});
+                case 3
+                    results = self.definedata(dataType, dataName, indexRange, inputs{:});
+                case 4
+                    results = self.definedata(dataType, dataName, indexRange, attribute,inputs{:});
+                case 5
+                    results = self.definedata(dataType, dataName, indexRange, attribute,create_symbolic_flag,inputs{:});
+                case 6
+                    results = self.definedata(dataType, dataName, indexRange, attribute,create_symbolic_flag,assign_value,inputs{:});
+                case 7
+                    results = self.definedata(dataType, dataName, indexRange, attribute,create_symbolic_flag,assign_value,data);
             end
 
 
-            if self.printResultsFlag
-                fprintf(results)
-                fprintf(newline)
-
-            end
 
 
-            % save the results in OP
-            results = self.update(results);
 
-
-            if (self.create_symbolic_flag || create_symbolic_flag) && numel(indexRange) <= 2   % create symbol
-                temp = self.sym(dataName,indexRange);
-                if ~isempty(temp)
-                    results = temp;
-                end
-            end
 
         end
 
@@ -199,15 +248,15 @@ classdef   POPA   < handle      % prepare the OP for AMPL
             % attributes : ordered
             % create_symbolic_flag: 1 to make symbolic variable
 
-              if nargin < 4 || isempty(attributes)
-                  attributes = "";
-              end
+            if nargin < 4 || isempty(attributes)
+                attributes = "";
+            end
 
-              if nargin < 5 || isempty(create_symbolic_flag)
-                 create_symbolic_flag = 0;
-               end
+            if nargin < 5 || isempty(create_symbolic_flag)
+                create_symbolic_flag = 0;
+            end
 
-          
+
             if isnumeric(setMembers)
                 eval("self.log." + setName + "=" + "setMembers") % add to the log
                 setMembers = string(setMembers);
@@ -236,7 +285,7 @@ classdef   POPA   < handle      % prepare the OP for AMPL
 
 
             % save the results in OP
-            results = self.update(results);
+            self.update(results);
 
             if self.create_symbolic_flag || create_symbolic_flag   % create symbolic
                 results = self.sym(dataName,1);
@@ -261,6 +310,7 @@ classdef   POPA   < handle      % prepare the OP for AMPL
                 data = self.sym2str(data);
             end
             results = defineOP(description, consName, data, indexRange);
+            results = self.filterslash(results);
 
             if self.printResultsFlag
                 fprintf(results)
@@ -274,7 +324,7 @@ classdef   POPA   < handle      % prepare the OP for AMPL
             end
 
             % save the results in OP
-            results = self.update(results);
+            self.update(results);
 
         end
 
@@ -290,7 +340,10 @@ classdef   POPA   < handle      % prepare the OP for AMPL
             if isa(costFunction, 'sym')
                 costFunction = self.sym2str(costFunction);
             end
+
             results = defineOP(description, objName, costFunction, indexRange);
+            results = self.filterslash(results);
+
 
             if self.printResultsFlag
                 fprintf(results)
@@ -303,7 +356,7 @@ classdef   POPA   < handle      % prepare the OP for AMPL
             end
 
             % save the results in OP
-            results = self.update(results);
+            self.update(results);
         end
 
 
@@ -314,7 +367,11 @@ classdef   POPA   < handle      % prepare the OP for AMPL
             % the optimization problem
             % for more information, use the command:   help assignParam
             if ~exist("indexValue","var")
+                if self.AMPL_available
+                indexValue = "auto";
+                else 
                 indexValue = 'default';
+                end
             end
             if isa(data, 'sym')
                 data = self.sym2str(data);
@@ -361,7 +418,7 @@ classdef   POPA   < handle      % prepare the OP for AMPL
             end
 
             % save the results in OP
-            results = self.update(results);
+            self.update(results);
         end
 
         function checkname(self,name)
@@ -371,16 +428,13 @@ classdef   POPA   < handle      % prepare the OP for AMPL
 
             text = " can not be a valid name because it contains the pattern: ";
 
-            if contains(name, self.left_bracket_symbol)
-                error(name + text +  self.left_bracket_symbol)
-            end
-
-            if contains(name, self.right_bracket_symbol)
-                error(name + text +  self.right_bracket_symbol)
-            end
-
-            if contains(name, self.comma_sympol)
-                error(name + text +  self.comma_sympol)
+            fieldNames = fieldnames(self.symbMATLAB) ;
+            for i = 1 : numel(fieldNames)
+                fieldName = fieldNames{i};
+                value = self.symbMATLAB.(fieldName);
+                if contains(name, value)
+                    error(name + text +  value)
+                end
             end
 
         end
@@ -395,9 +449,7 @@ classdef   POPA   < handle      % prepare the OP for AMPL
                 end
             end
 
-
         end
-
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -645,7 +697,7 @@ classdef   POPA   < handle      % prepare the OP for AMPL
         function results = sumI(self,varargin)
             % this function is for sigam_summation
             % self.sumI('k',"1..3", x[k])= x[1] + x[2] + x[3]
-            % self.sumI('a',"1..2",'k',1:2,x[a,k]) =  self.sumI('a',1:2,self.sumI('k',1:2,x[a,k]))
+            % self.sumI('a',1:2,'k',"1..2",x[a,k]) =  self.sumI('a',1:2,self.sumI('k',1:2,x[a,k]))
             % not the set is AMPL set or indexes
             num_input = numel(varargin);
 
@@ -704,7 +756,7 @@ classdef   POPA   < handle      % prepare the OP for AMPL
             % sym("U[k]") convert it to symbolic
             results = [];
             if ~exist("indexRange",'var')
-                results = self.str2sym(dataName); 
+                results = self.str2sym(dataName);
                 return
             end
             dimension = numel(indexRange);
@@ -739,29 +791,31 @@ classdef   POPA   < handle      % prepare the OP for AMPL
 
 
         function results = str2sym(self, stringArray)
-            % replace [ --> _LL_
-            % replace ] --> _JJ
-            % replace , --> _I_
+            % symbAMPL like [  to symbMATLAB example _LL_
+
             if ~(isstring(stringArray)||ischar(stringArray))
                 display(stringArray)
                 error('to convert from string to symbolic the input must be string')
             end
 
-            stringArray = strrep(stringArray,'[',self.left_bracket_symbol);
-            stringArray = strrep(stringArray,']',self.right_bracket_symbol) ;
-            stringArray = strrep(stringArray,',',self.comma_sympol);
-            stringArray = strrep(stringArray,'^','**');
+
+            fieldNames = fieldnames(self.symbAMPL) ;
+            for i = 1 : numel(fieldNames)
+                fieldName = fieldNames{i};
+                old = self.symbAMPL.(fieldName);
+                new = self.symbMATLAB.(fieldName);
+                stringArray = strrep(stringArray, old, new);
+            end
 
 
             results = sym(stringArray, 'real');
-
         end
 
         function results = sym2str(self, symArray)
-            % replace  _LL_  -->  [
-            % replace  _JJ   -->  ]
-            % replace , --> _I_
-            % replace  ^  -->  **
+            %  symbMATLAB example _LL_ to symbAMPL like [
+
+
+
             if isstring(symArray)
                 results = symArray;
                 return
@@ -775,17 +829,22 @@ classdef   POPA   < handle      % prepare the OP for AMPL
 
             results = string(symArray);
 
-            results = strrep(results,self.left_bracket_symbol,'[') ;
-            results = strrep(results,self.right_bracket_symbol,']') ;
-            results = strrep(results,self.comma_sympol,',');
-            results = strrep(results,'^','**');
-            results = strrep(results,'==','=');
-            
+
+            fieldNames = fieldnames(self.symbAMPL) ;
+            for i = 1 : numel(fieldNames)
+                fieldName = fieldNames{i};
+                old = self.symbMATLAB.(fieldName);
+                new = self.symbAMPL.(fieldName);
+                results = strrep(results, old, new);
+            end
+
+
+
             if regexp(results(1),'\(.*\) <=') % check  ((2 <= x1 + 4) <= 4)
                 for i = 1 : numel(results)
                     temp = char(regexp(results(i),'\(.*\) <=','match'));
                     results(i) = strrep(results(i),temp,temp(2:end-4)+" <=");
-                end 
+                end
 
             end
 
@@ -794,6 +853,14 @@ classdef   POPA   < handle      % prepare the OP for AMPL
 
         end
 
+        function output = filterslash(~,input)
+
+            if ~(isstring(input)||ischar(input))
+                error("the input must be string (array) or char   "+ input )
+            end
+
+            output = strrep(input, "\+" ,  "+" );
+        end
 
 
 

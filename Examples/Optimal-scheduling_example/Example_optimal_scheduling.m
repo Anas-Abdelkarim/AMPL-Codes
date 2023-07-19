@@ -26,26 +26,28 @@ run(fullfile(matlab_api_path,"setUp.m"))
 
 %% Method 1
 %read from .mod and .dat files
-% ampl1 = AMPC(amplPathDir);
-% ampl1.read([strcat(currentPath(1:end-29),'\Model.mod')]);
-% ampl1.readData([strcat(currentPath(1:end-29),'\DATA.dat')]);
-% ampl1.eval('option show_stats 1;')
-% ampl1.eval('option solver CPLEX;')
-% ampl1.solve
-% costValue = ampl1.getValue("cost_function")
-% aClass = ampl1.getVariable("a")
-% a = aClass.getValues;
-% a = a.toTable;
-% a = cell2mat(a{:,2});
-% ampl1.getObj('cost_function')
-% ampl1.close
+ampl1 = POPA;
+ampl1 = ampl1.runAMPL;
+ampl1.read([strcat(currentPath(1:end-27),'\Model.mod')]);
+ampl1.readData([strcat(currentPath(1:end-27),'\DATA.dat')]);
+ampl1.eval('option show_stats 1;')
+ampl1.eval('option solver IPOPT;')
+ampl1.solve
+costValue = ampl1.getValue("cost_function")
+aClass = ampl1.getVariable("a")
+a = aClass.getValues;
+a = a.toTable;
+a = cell2mat(a{:,2});
+ampl1.getObj('cost_function')
+ampl1.close
 
 
 
 %% Method 2
 % model mode
 % define the parameters
-ampl = AMPC(amplPathDir);
+ampl = POPA;
+ampl = ampl.runAMPL;
 ampl.defineParam("N",1,"integer") % definde N equivalent to ampl.eval('model; param N integer;)
 ampl.defineParam("Ts n_full_maintenance n_partial_maintenance") % scalar and no attributes
 ampl.defineParam("Q Ma  Mb ",[6,6]) % matrices with size of 6*6 (index ranges from 1..6, 1..6), no attributes
