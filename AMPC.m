@@ -29,6 +29,7 @@ classdef AMPC < AMPL  & POPA
                     for k = 1 : length(obj.OP_log)
                         if k ~= 0                   % start with k~=6
                             try
+                             obj.OP_log(k)
                                 obj.eval(obj.OP_log(k))                             
                             catch
                                 display(obj.OP_log(k))

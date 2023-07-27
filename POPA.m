@@ -27,6 +27,23 @@ classdef   POPA   < handle      % prepare the OP for AMPL
             obj.symbAMPL.right_bracket = ']';
             obj.symbMATLAB.right_bracket = '_JJ';
 
+            obj.symbAMPL.left_curlyBracket = '{';   % 
+            obj.symbMATLAB.left_curlyBracket = '_EE_';
+
+             obj.symbAMPL.right_curlyBracket = '}';   % 
+            obj.symbMATLAB.right_curlyBracket = '_ZZ_';
+
+
+            obj.symbAMPL.left_parentheses = '(';   % 
+            obj.symbMATLAB.left_parentheses = '_CC_';
+
+            obj.symbAMPL.right_parentheses = ')';   % 
+            obj.symbMATLAB.right_parentheses = '_YY_';
+
+            obj.symbAMPL.set_in  = ' in ';   % ex k in j
+            obj.symbMATLAB.set_in = '__IN__';
+
+
             obj.symbAMPL.comma = ',';
             obj.symbMATLAB.comma = '_I_';
 
@@ -52,7 +69,7 @@ classdef   POPA   < handle      % prepare the OP for AMPL
         function update(self,command)
             % update the diary
             self.OP_log_counter = self.OP_log_counter + 1;
-            self.OP_log(self.OP_log_counter) = command;
+            self.OP_log(self.OP_log_counter,1) = command;
         end
 
         function reset(self)
@@ -373,9 +390,8 @@ classdef   POPA   < handle      % prepare the OP for AMPL
                 indexValue = 'default';
                 end
             end
-            if isa(data, 'sym')
-                data = self.sym2str(data);
-            end
+
+           
 
             if strcmp(indexValue,"auto") % to exatract the sets of the paramerter for auto mode
                 sets= self.getParameter(paramName).getIndexingSets;
@@ -694,7 +710,19 @@ classdef   POPA   < handle      % prepare the OP for AMPL
 
         end
 
-        function results = sumI(self,varargin)
+
+
+        function results = sumSigmaS(self,varargin)
+            % this function is for sigam_summation the results and symbolic varibles
+            % self.sumI('k',"1..3", x[k])= x[1] + x[2] + x[3]
+            % self.sumI('a',1:2,'k',"1..2",x[a,k]) =  self.sumI('a',1:2,self.sumI('k',1:2,x[a,k]))
+            % not the set is AMPL set or indexes
+            results = self.sumSigma(varargin{:});
+            results = self.str2sym(results);
+        end
+
+
+        function results = sumSigma(self,varargin)
             % this function is for sigam_summation
             % self.sumI('k',"1..3", x[k])= x[1] + x[2] + x[3]
             % self.sumI('a',1:2,'k',"1..2",x[a,k]) =  self.sumI('a',1:2,self.sumI('k',1:2,x[a,k]))
@@ -828,7 +856,16 @@ classdef   POPA   < handle      % prepare the OP for AMPL
 
 
             results = string(symArray);
+ 
 
+            if regexp(results(1),'\(.*\) <=') % check  ((2 <= x1 + 4) <= 4)
+                for i = 1 : numel(results)
+                    temp = char(regexp(results(i),'\(.*\) <=','match'));
+                    if count(temp,"<=") ==2
+                    results(i) = strrep(results(i),temp,temp(2:end-4)+" <=");
+                    end
+                end
+            end
 
             fieldNames = fieldnames(self.symbAMPL) ;
             for i = 1 : numel(fieldNames)
@@ -840,13 +877,9 @@ classdef   POPA   < handle      % prepare the OP for AMPL
 
 
 
-            if regexp(results(1),'\(.*\) <=') % check  ((2 <= x1 + 4) <= 4)
-                for i = 1 : numel(results)
-                    temp = char(regexp(results(i),'\(.*\) <=','match'));
-                    results(i) = strrep(results(i),temp,temp(2:end-4)+" <=");
-                end
+            
 
-            end
+            
 
 
 

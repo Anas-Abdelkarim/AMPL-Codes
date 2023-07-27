@@ -18,7 +18,6 @@ function results = assignParam(paramName,data,indexValue)
 
 
 string(indexValue);
-data_precision = 1000;
 
 paramName =  split(paramName);
 paramName = paramName(strlength(paramName)>0); % discard the empty cells
@@ -74,9 +73,8 @@ if length(dataSize) <= 2
         end
         column_indexes_str = join(string((column_indexes)));
         Temp1 = [row_indexes' data ];% add the row_indexes to the data and convert to string
-        Temp2 = mat2str(Temp1) ;   % convert to string
-        Temp3 = replace(Temp2(2:end-1),';'," ");
-        results =  strcat(amplCommand,paramName, ": ",  column_indexes_str,":= ",Temp3, ';' ) ;
+        Temp2 = join(join(mat2string(Temp1))) ;   % convert to string
+        results =  strcat(amplCommand,paramName, ": ",  column_indexes_str,":= ",Temp2, ';' ) ;
     end
 
 elseif length(dataSize) == 3
