@@ -19,7 +19,7 @@ classdef   POPA   < handle      % prepare the OP for AMPL
 
     methods
 
-        function obj = POPA(obj)
+        function obj = POPA()
 
             obj.symbAMPL.left_bracket = '[';   % symbols
             obj.symbMATLAB.left_bracket = '_LL_'; % symbols replacements
@@ -30,7 +30,7 @@ classdef   POPA   < handle      % prepare the OP for AMPL
             obj.symbAMPL.left_curlyBracket = '{';   % 
             obj.symbMATLAB.left_curlyBracket = '_EE_';
 
-             obj.symbAMPL.right_curlyBracket = '}';   % 
+            obj.symbAMPL.right_curlyBracket = '}';   % 
             obj.symbMATLAB.right_curlyBracket = '_ZZ_';
 
 
@@ -50,6 +50,16 @@ classdef   POPA   < handle      % prepare the OP for AMPL
             obj.symbAMPL.sum = '\+';
             obj.symbMATLAB.sum = '_pLUS_';
 
+            obj.symbAMPL.minus = '\-';
+            obj.symbMATLAB.minus = '_mINUS_';
+
+            obj.symbAMPL.times = '\*';
+            obj.symbMATLAB.times = '_tIMES_';
+           
+            obj.symbAMPL.dot = '\.';
+            obj.symbMATLAB.dot = '_dOT_';
+            
+            % expression difference between AMPL and MATLAB symbolic variables
             obj.symbAMPL.power = '**';
             obj.symbMATLAB.power = '^';
 
@@ -98,7 +108,6 @@ classdef   POPA   < handle      % prepare the OP for AMPL
 
 
         function  self = runAMPL(self)
-
             temp = AMPC(self);
             self = temp;
             clearvars temp
@@ -826,6 +835,7 @@ classdef   POPA   < handle      % prepare the OP for AMPL
                 error('to convert from string to symbolic the input must be string')
             end
 
+      
 
             fieldNames = fieldnames(self.symbAMPL) ;
             for i = 1 : numel(fieldNames)

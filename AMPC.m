@@ -25,7 +25,7 @@ classdef AMPC < AMPL  & POPA
                 obj.OP_log = POPA_obj.OP_log;
                 obj.OP_log_counter = POPA_obj.OP_log_counter;
 
-                if true          % true for diagnosis mode
+                if false          % true for diagnosis mode
                     for k = 1 : length(obj.OP_log)
                         if k ~= 0                   % start with k~=6
                             try

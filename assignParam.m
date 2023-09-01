@@ -60,10 +60,12 @@ if length(dataSize) <= 2
             row_indexes = 1:dataSize(1);
             column_indexes = 1:dataSize(2);
         else
+           indexValue  = strrep(indexValue,'..',':');
             column_indexes = eval(indexValue(end));
             if length(indexValue)==1
                 row_indexes = 1 ;
             else
+
                 row_indexes =eval(indexValue(1));
                 if iscolumn(row_indexes)
                     row_indexes =row_indexes';
