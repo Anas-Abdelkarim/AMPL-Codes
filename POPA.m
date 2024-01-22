@@ -130,9 +130,11 @@ classdef   POPA   < handle      % prepare the OP for AMPL
             % This function is used to define the variables  for the
             % optimization problem in ampl language
             % for more information, use the command:   help DenfineData
-            % create_symbolic_flag: 1 to make symbolic variable
+            % indexRange = 5 1D, [2,"3..6"] 2D, "K_u" set
+            % attribute = "", "integer", = "binary", "integer >= 0", " >=6"
+            % create_symbolic_flag: 1 to make symbolic variable 0 otherwise
             % assign_value = 'data', if we want to define and assign the data
-            % data: the numeric values of the data
+            % data: the numeric values of the data or string 
 
 
             min_narg = 4;
@@ -200,9 +202,11 @@ classdef   POPA   < handle      % prepare the OP for AMPL
             % This function is used to define the variables  for the
             % optimization problem in ampl language
             % for more information, use the command:   help DenfineData
-            % create_symbolic_flag: 1 to make symbolic variable
+            % indexRange = 5 1D, [2,"3..6"] 2D, "K_u" set
+            % attribute = "", "integer", = "binary", "integer >= 0", " >=6"
+            % create_symbolic_flag: 1 to make symbolic variable 0 otherwise
             % assign_value = 'data', if we want to define and assign the data
-            % data: the numeric values of the data
+            % data: the numeric values of the data or string 
 
             self.checkname(dataName)
             max_narg = 6;
@@ -235,10 +239,11 @@ classdef   POPA   < handle      % prepare the OP for AMPL
             % This function is used to define the variables  for the
             % optimization problem in ampl language
             % for more information, use the command:   help DenfineData
-            % create_symbolic_flag: 1 to make symbolic variable
+            % indexRange = 5 1D, [2,"3..6"] 2D, "K_u" set
+            % attribute = "", "integer", = "binary", "integer >= 0", " >=6"
+            % create_symbolic_flag: 1 to make symbolic variable 0 otherwise
             % assign_value = 'data', if we want to define and assign the data
-            % data: the numeric values of the data
-
+            % data: the numeric values of the data or string
             self.checkname(dataName)
             max_narg = 6;
             inputs = cell(max_narg-nargin,1);
@@ -396,7 +401,7 @@ classdef   POPA   < handle      % prepare the OP for AMPL
                 if self.AMPL_available
                 indexValue = "auto";
                 else 
-                indexValue = 'default';
+                indexValue = "default";
                 end
             end
 
@@ -405,7 +410,7 @@ classdef   POPA   < handle      % prepare the OP for AMPL
             if strcmp(indexValue,"auto") % to exatract the sets of the paramerter for auto mode
                 sets= self.getParameter(paramName).getIndexingSets;
                 if isempty(sets)
-                    indexValue = 'default';
+                    indexValue = "default";
                 else
                     indexValue = strings(1,length(sets));
                     for i = 1 : length(sets)
@@ -765,13 +770,144 @@ classdef   POPA   < handle      % prepare the OP for AMPL
                 results = strcat("sum{",varargin{i-2}, " in ", setMembers ,'}(', results,')');
             end
 
-
-
-
-
-
-
         end
+        
+        function results = m2s(~, data, row_indexes) 
+            %  results = self.m2s(data); matrix to string used only self.evald and the indexes are  
+            % ex. "1 1 2 2 3 4" = self.m2s([1 2 ; 3 4])
+            %     "12 1 2 13 3 4 14 6 9" = self.m2s([1 2 ; 3 4; 6 9],[12, 13,14])
+          
+           data  = mat2string(data);
+           if ~exist("row_indexes",'var') || isempty(row_indexes)
+               row_indexes = string(1:height(data));
+           else
+               if iscolumn(row_indexes)
+                   row_indexes = row_indexes';
+               end
+             row_indexes = string(row_indexes);
+           end 
+           
+           data = [row_indexes; data']; %transpose because reshape needs it
+           
+           results = join(reshape(data, 1, []));
+        end 
+        
+        function results = evalsf(self, varargin)
+            % example self.evalsf('let x:= %d;', 5)
+            % example self.evalsf('update data x; data; param x %s := %s;',join(string([0 1])),self.m2s([1 2 ; 3 4],[12, 13]))
+            % the output as if you input:
+            % self.eval('update data x; data; param x 0 1 :=  "12 1 2 13 3 4";)
+            results = sprintf(varargin{1},varargin{2:end});
+            self.eval(results);
+            
+        end     
+        
+                
+        function results = setScal(self, varName, data)
+            % results = self.scalar('x',5)
+            % for fast setting the paramet
+            results = sprintf("let %s := %d;", varName, data);
+             if self.AMPL_available
+                self.eval(results)
+            else
+                self.update(results);
+            end
+        end
+        
+         function results = setVec(self, varName, data,index)
+            % results = self.setVec('x',[2,3],[1,2])
+            % the default index = [1: length(data)] and must be given
+            % for fast setting the paramet
+             data  = join(mat2string(data));
+             
+             index  = join(mat2string(index));
+             
+             %transpose because reshape needs it
+           
+             results =  sprintf("update data %s; data; param %s: %s := 1 %s;", varName, varName,index, data);
+   
+            if self.AMPL_available
+               self.eval(results)           
+               %check_message = evalc(sprintf("self.display('%s')",varName));
+             %  if  contains( check_message , 'failed check' )
+               %    error(check_message)
+             %  end
+            else
+                self.update(results);
+            end
+            % save the results in OP
+            %
+         end
+        
+           function results = setMat(self, varName, data, row_index, column_index)
+            % results = self.setMat('x',[2,3],[1,2])
+            % the default index = [1: length(data)] and must be given
+            % for fast setting the paramet
+             data  = mat2string(data);
+             
+             column_index = join(mat2string(column_index));
+             if isrow(row_index)
+              row_index = row_index';
+             end
+             row_index = string(row_index);
+            
+           
+            data = [row_index data]';
+           %transpose because reshape needs it
+           
+           data  = join(reshape(data, 1, []));
+           results =  sprintf("reset data %s; data; param %s: %s := %s;", varName, varName, column_index, data);
+   
+            if self.AMPL_available
+                self.eval(results)
+                 check_message = evalc(sprintf("self.display('%s')",varName));
+                if  contains( check_message , 'failed check' )
+                    error(check_message)
+                end
+            else
+                self.update(results);
+            end
+            % save the results in OP
+            %
+           end
+        
+        
+           function results = getScal(self, varName, precision)
+               %results = self.getScal(varName, precision)
+               %results = self.getScal('N',16) % 16 is the maximum
+               %precision and it is optional
+
+               if exist('precision','var')
+                   self.eval("option display_precision "+ precision + " ;")
+               end
+
+               if isstring(varName)
+                   varName = char(varName);
+               end
+               data = evalc("self.display(varName)") ;
+               results = str2double(data(length(varName)+3:end));
+
+           end
+
+           function results = getVec(self, varName, precision)
+               %results = self.getVec(varName, precision)
+               %results = self.getVec('N',16) % 16 or 0 is the maximum
+               %precision and it is optional
+
+               if exist('precision','var')
+                   self.eval("option display_precision "+ precision + " ;")
+               end
+
+               if isstring(varName)
+                   varName = char(varName);
+               end
+               data = evalc("self.display(varName)") ;
+               results = str2num(data(length(varName)+9:end));
+               results(:,1:2:end) = [];
+               results = reshape(results,[],1);
+           end
+
+            
         %%%%%%%%%%%%%%% MATHMATICAL OPERATIONS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 

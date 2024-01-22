@@ -1,4 +1,5 @@
 function results = assignParam(paramName,data,indexValue)
+%results = assignParam(paramName,data,indexValue)
 % This function is used to feed the parameters values  for the
 % optimization problem in ampl language
 % variable_name should match with the name defined in the model part
@@ -9,20 +10,29 @@ function results = assignParam(paramName,data,indexValue)
 % e.g. variable_name = ['param1 param2']; data = [1,2] 
 % ---> results = assignParam(variable_name,data)
 % e.g,  results = assignParam('Ts',5)
-% e.g,  results = assignParam('A',[1 2 ; 5 6])
+% e.g,  results = assignParam('A',[1.1 1.2 ; 2.1 2.2])
 % e.g, results = assignParam('A[2,2]',5) to change only one element in the vector 
 % e.g, results = assignParam('B',2,'1') this to indicate the B has index 1; 
 % e.g, results = assignParam('B',2 9,"[0 2 3]") this to indicate the B has indexes 0 2 3 ; 
 % e.g, results = assignParam('B',data,["0:9","2:7"]) this to indicate the B matrix has row indexes 0:9 and column index 2:7 ; 
 % e.g, results = assignParam('B',2,'auto') to evaluate the sets from ampl. 
 
-
-string(indexValue);
-
+if exist('indexValue','var')
+    if  isnumeric(indexValue) || ischar(indexValue)
+        error(' index range must be string not numeric nor char')
+    end
+else
+    indexValue = "default";
+end
 paramName =  split(paramName);
 paramName = paramName(strlength(paramName)>0); % discard the empty cells
 
-
+if ischar(data) 
+    data = string(data);
+end
+    
+    
+    
 if  length(paramName) ==1 % means it constains names of multiple paramerters names
     multipleNamesFlag = false;
 else
@@ -50,13 +60,13 @@ amplCommand =  amplCommand4;
 
 if length(dataSize) <= 2  
 
-    if (max(dataSize)==1 || multipleNamesFlag) && strcmp(indexValue,'default') % for scalars
+    if (max(dataSize)==1 || multipleNamesFlag) && strcmp(indexValue,"default") % for scalars
         results = strcat(amplCommand2,paramName, ":= ", num2str(data), ';' );
         if multipleNamesFlag
             results =  strcat(results{:});
         end 
     else  %  for   vectors and matrices 
-        if strcmp(indexValue,'default')
+        if strcmp(indexValue,"default")
             row_indexes = 1:dataSize(1);
             column_indexes = 1:dataSize(2);
         else

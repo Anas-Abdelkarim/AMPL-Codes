@@ -2,7 +2,7 @@ function results = mat2string(input)
 % convert the matrix to string
 % example x = mat2string([1 2 ; 6 9 ]
 if isnumeric(input)
-    precision = 10000;
+    precision = 15;
     arraySize = size(input);
     string1 =  mat2str(input, precision);
     StringCell = split(string1, {'[', ']',',',';',' '})';

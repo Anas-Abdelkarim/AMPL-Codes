@@ -19,9 +19,11 @@ classdef AMPC < AMPL  & POPA
             path = path_part{1}(1:end-1); 
 
             obj@AMPL(path)
+            setenv("PATH",getenv("PATH") + ";" + path);
+
             obj.AMPL_available = 1; % we are connected to AMPL
 
-            if exist('POPA_obj','var')
+            if exist('POPA_obj','var') && sum(POPA_obj ~= path)
                 obj.OP_log = POPA_obj.OP_log;
                 obj.OP_log_counter = POPA_obj.OP_log_counter;
 
@@ -29,7 +31,7 @@ classdef AMPC < AMPL  & POPA
                     for k = 1 : length(obj.OP_log)
                         if k ~= 0                   % start with k~=6
                             try
-                             obj.OP_log(k)
+                             obj.OP_log(k);
                                 obj.eval(obj.OP_log(k))                             
                             catch
                                 display(obj.OP_log(k))
@@ -233,7 +235,7 @@ classdef AMPC < AMPL  & POPA
         end
 
         function [values row_data] = getSetValue(self, setName)
-            % e.g. [myValue]= ampl.getVarValue(varName)
+            % e.g. [myValue]= ampl.getSetValue(varName)
             data = self.getSet(setName);
             if isempty(data)
                 resutls = [];

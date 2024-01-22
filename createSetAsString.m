@@ -12,7 +12,7 @@ end
 indexRange = string(indexRange);% make it strings if it is numeric
 
 indexRange = reshape(indexRange,1,[]);
-
+indexRange = strrep(indexRange, ":", "..");
 setAsString = "";
 for i = 1 : length(indexRange)      
     indexAsChar = char(indexRange(i)); % convert to char
