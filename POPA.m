@@ -1,3 +1,5 @@
+%{
+%}
 classdef   POPA   < handle      % prepare the OP for AMPL
 
     properties
@@ -19,7 +21,8 @@ classdef   POPA   < handle      % prepare the OP for AMPL
 
     methods
 
-        function obj = POPA()
+        function obj = POPA()  % take care that your varaibes name in AMPL
+                               % does not have these patterns : _LL_ ...
 
             obj.symbAMPL.left_bracket = '[';   % symbols
             obj.symbMATLAB.left_bracket = '_LL_'; % symbols replacements
@@ -165,7 +168,9 @@ classdef   POPA   < handle      % prepare the OP for AMPL
 
 
             if self.logging_flag
-                self.addLog(dataName,indexRange)
+                try
+                 self.addLog(dataName,indexRange)
+                end   
             end
 
 
@@ -469,13 +474,11 @@ classdef   POPA   < handle      % prepare the OP for AMPL
 
         end
 
-        function addLog(self,name,idxes)
-            % to check if the variable or parameter name has the patterns
-            %     '_LL_','_JJ' , or '_I_'    for left_bracket_symbol
-            %  right_bracket_symbol  or  comma_sympol, respectively
-            for i = 1 : length(idxes)
-                if isnumeric(idxes(i))  ||  all(isstrprop(idxes(i), 'digit'))
-                    eval("self.log." + name + ".size_"+ i + "= idxes(i);") % add to the log
+        function addLog(self,name,indexes)
+         
+            for i = 1 : length(indexes)
+                if isnumeric(indexes(i))  ||  all(isstrprop(indexes(i), 'digit'))
+                    eval("self.log." + name + ".size_"+ i + "= indexes(i);") % add to the log
                 end
             end
 
