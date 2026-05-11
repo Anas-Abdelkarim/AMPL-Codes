@@ -80,7 +80,10 @@ ampl.defineParam("x_min x_max B x_initial", 2)
 
 
 %% assign values for  the parameters in AMPL
-ampl.assignParam("N R u_min u_max",[N R u_min u_max])
+ampl.assignParam("N",N)
+ampl.assignParam("R",R)
+ampl.assignParam("u_min",u_min)
+ampl.assignParam("u_max",u_max)
 ampl.assignParam("x_min",x_min)
 ampl.assignParam("x_max",x_max)
 ampl.assignParam("Q",Q)

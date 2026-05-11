@@ -10,7 +10,7 @@ clear all
 
 %%
 %%%%%%%%%%%%%%%%%%%%%%% Ampl Environment  %%%%%%%%%%%%%%%%%%%%%%%%%
-currentPath = mfilename('fullpath') ;
+currentPath = fileparts(mfilename('fullpath')); 
 APIfolderName =  'amplapi';
 Index_amplapi = strfind(currentPath,APIfolderName);
 amplPathDir = currentPath(1:Index_amplapi-1);
@@ -28,8 +28,8 @@ run(fullfile(matlab_api_path,"setUp.m"))
 %read from .mod and .dat files
 ampl1 = POPA;
 ampl1 = ampl1.runAMPL;
-ampl1.read([strcat(currentPath(1:end-27),'\Model.mod')]);
-ampl1.readData([strcat(currentPath(1:end-27),'\DATA.dat')]);
+ampl1.read(fullfile(currentPath,'Model.mod'));
+ampl1.readData(fullfile(currentPath,'DATA.dat'));
 ampl1.eval('option show_stats 1;')
 ampl1.eval('option solver IPOPT;')
 ampl1.solve
@@ -46,27 +46,27 @@ ampl1.close
 %% Method 2
 % model mode
 % define the parameters
-ampl = POPA;
-ampl = ampl.runAMPL;
-ampl.defineParam("N",1,"integer") % definde N equivalent to ampl.eval('model; param N integer;)
-ampl.defineParam("Ts n_full_maintenance n_partial_maintenance") % scalar and no attributes
-ampl.defineParam("Q Ma  Mb ",[6,6]) % matrices with size of 6*6 (index ranges from 1..6, 1..6), no attributes
-ampl.defineParam("initial_values ",6) % vector with size of 6 (index ranges from 1..6), no attributes
+ampl2 = POPA;
+ampl2 = ampl2.runAMPL;
+ampl2.defineParam("N",1,"integer") % definde N equivalent to ampl.eval('model; param N integer;)
+ampl2.defineParam("Ts n_full_maintenance n_partial_maintenance") % scalar and no attributes
+ampl2.defineParam("Q Ma  Mb ",[6,6]) % matrices with size of 6*6 (index ranges from 1..6, 1..6), no attributes
+ampl2.defineParam("initial_values ",6) % vector with size of 6 (index ranges from 1..6), no attributes
 
 
 % define the variables
-ampl.defineVar("x",[6,"0..N"],">=0") % because the index range
+ampl2.defineVar("x",[6,"0..N"],">=0") % because the index range
 % for the variables, a f p, do not start from 1,i.e, start from 0,
 % note N is defined earlier as parameter
 % check for example ampl.getValue('x[1,0]')
-ampl.defineVar("a f  p ","0..N","binary")
+ampl2.defineVar("a f  p ","0..N","binary")
 
 %%
 % the objective function
 cost_function = ['10000/(2*N)*sum { k in 0..N-1} (             ' ...
                  'x[3,k]  +  x[3,k+1] + x[4,k]  +  x[4,k+1] +  ' ...
                  'x[5,k]  +  x[5,k+1] +  x[6,k]  + x[6,k+1] )  '];
-ampl.defineObj("min","cost_function",cost_function);
+ampl2.defineObj("min","cost_function",cost_function);
 
 
 
@@ -80,21 +80,21 @@ switch wayNumber
             ' (a[k] * sum { c in 1..6} Q[i,c]  * x[c,k]) +                       ' ...
             ' (f[k] * sum { c in 1..6} Q[i,c]*sum { j in 1..6}  Ma[c,j]*x[j,k])+ ' ...
             ' (p[k] * sum { c in 1..6} Q[i,c]*sum { j in 1..6}  Mb[c,j]*x[j,k])  ' ];
-        ampl.defineCons("dynamics",dynamics,"i in 1..6, k in 0..N-1" );
+        ampl2.defineCons("dynamics",dynamics,"i in 1..6, k in 0..N-1" );
         
     case 2   % second way % we use multiply function
         dynamics  =  "x[i,k+1] =  " +...
             "  a[k] *" + multiply("Q.T[i,1..6]","x[1..6,k]")+ ...
             "+ f[k] *" + multiply("Q.T[i,1..6]"," Ma[1..6,1..6]","x[1..6,k]")+...
             "+ p[k] *" + multiply("Q.T[i,1..6]"," Mb[1..6,1..6]","x[1..6,k]");
-        ampl.defineCons("dynamics",dynamics,"i in 1..6, k in 0..N-1" ); %we need to clarify what i and k in constraints indexRange
+        ampl2.defineCons("dynamics",dynamics,"i in 1..6, k in 0..N-1" ); %we need to clarify what i and k in constraints indexRange
         
     case 3  % Thrid way % we use both multiply and expand functions
         dynamics = expand("x[1..6,k+1] = ") +...
             "  a[k] *" + multiply("Q[1..6,1..6]","x[1..6,k]")+ ...
             "+ f[k] *" + multiply("Q[1..6,1..6]"," Ma[1..6,1..6]","x[1..6,k]")+ ...
             "+ p[k] *" + multiply("Q[1..6,1..6]"," Mb[1..6,1..6]","x[1..6,k]");  %we need to clarify what i and k in constraints indexRange
-        ampl.defineCons("dynamics",dynamics,"k in 0..N-1" );
+        ampl2.defineCons("dynamics",dynamics,"k in 0..N-1" );
     case 4  % replace every k in dynamics in case 3  to 1..N-1; being N-1 a value
         dynamics = [];
         N = 30; % where 3 is N-1
@@ -104,7 +104,7 @@ switch wayNumber
                 sprintf("+ f[%u]*",k) + multiply("Q[1..6,1..6]"," Ma[1..6,1..6]",sprintf("x[1..6,%u]",k))+ ...
                 sprintf("+ p[%u]*",k) + multiply("Q[1..6,1..6]"," Mb[1..6,1..6]",sprintf("x[1..6,%u]",k))];
         end
-        ampl.defineCons("dynamics",dynamics);
+        ampl2.defineCons("dynamics",dynamics);
     case 5  % feed the constants directly
         dynamics = [];
         N = 30; % where 3 is N-1
@@ -117,30 +117,30 @@ switch wayNumber
                 sprintf("+ f[%u]*",k) + multiply(Q, Ma,sprintf("x[1..6,%u]",k))+ ...
                 sprintf("+ p[%u]*",k) + multiply(Q,Mb,sprintf("x[1..6,%u]",k))];
         end
-        ampl.defineCons("dynamics",dynamics);
+        ampl2.defineCons("dynamics",dynamics);
 end
 
 
 
 
 int = 'a[0]=1 ';
-ampl.defineCons("int",int);
+ampl2.defineCons("int",int);
 
 system_active = ['sum { j in 0..N-1} a[j] =  N - ' ...
                  '(n_full_maintenance + n_partial_maintenance )'];
-ampl.defineCons("system_active",system_active)
+ampl2.defineCons("system_active",system_active)
 
 full_maintenance_active= 'sum { j in 0..N-1} f[j] =  n_full_maintenance';
-ampl.defineCons("full_maintenance_active",full_maintenance_active)
+ampl2.defineCons("full_maintenance_active",full_maintenance_active)
 
 Partial_maintenance_active = 'sum { j in 0..N-1} p[j] =  n_partial_maintenance';
-ampl.defineCons("Partial_maintenance_active",Partial_maintenance_active)
+ampl2.defineCons("Partial_maintenance_active",Partial_maintenance_active)
 
 one_active = ' a[j] + f[j] + p[j] = 1 ';
-ampl.defineCons("one_active",one_active,"j in 0..N")
+ampl2.defineCons("one_active",one_active,"j in 0..N")
 
 initial_values_constraints = 'x[i,0] = initial_values[i]'    ;
-ampl.defineCons("initial_values_constraints",initial_values_constraints,"i in 1..6")
+ampl2.defineCons("initial_values_constraints",initial_values_constraints,"i in 1..6")
 
 
 % set values
@@ -178,31 +178,34 @@ if ~exist('Q','var')
 end
 
 % defind the data
-ampl.assignParam("N  n_full_maintenance n_partial_maintenance Ts",[N n_full_maintenance n_partial_maintenance Ts])
-ampl.assignParam("initial_values",initial_values)
-ampl.assignParam("Ma",Ma)
-ampl.assignParam("Mb",Mb)
-ampl.assignParam("Q",Q)
+ampl2.assignParam("N",N)
+ampl2.assignParam("n_full_maintenance",n_full_maintenance)
+ampl2.assignParam("n_partial_maintenance",n_partial_maintenance)
+ampl2.assignParam("Ts",Ts)
+ampl2.assignParam("initial_values",initial_values)
+ampl2.assignParam("Ma",Ma)
+ampl2.assignParam("Mb",Mb)
+ampl2.assignParam("Q",Q)
 
 %% solve the optimization problem
-ampl.eval('option show_stats 1;')
-ampl.eval('option solver CPLEX;')
-ampl.solve
+ampl2.eval('option show_stats 1;')
+ampl2.eval('option solver CPLEX;')
+ampl2.solve
 
 %% Harvest the results
 % check the value of N
-ampl.getParamValue("N")
-ampl.getParamValue("initial_values")
-ampl.getParamValue("Ma")
-[a, index,rowdata] = ampl.getVarValue("a");
-f = ampl.getVarValue("f");
-p = ampl.getVarValue("p");
-x = ampl.getVarValue("x");
+ampl2.getParamValue("N")
+ampl2.getParamValue("initial_values")
+ampl2.getParamValue("Ma")
+[a, index,rowdata] = ampl2.getVarValue("a");
+f = ampl2.getVarValue("f");
+p = ampl2.getVarValue("p");
+x = ampl2.getVarValue("x");
 x1 = x(1,:)';
 
 
 % objective function
-[value, astatus,result,exitcode,message,expandCost] = ampl.getObj('cost_function')
+[value, astatus,result,exitcode,message,expandCost] = ampl2.getObj('cost_function')
 
 
 [a f p ] 
